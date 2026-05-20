@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./api
+    command: python manage.py runserver 0.0.0.0:${BACKEND_PORT:-8000}
+    volumes:
+      - ./api/:/usr/src/api/
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+  db:
+    image: postgres:17
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=hello_django
+      - POSTGRES_PASSWORD=hello_django
+      - POSTGRES_DB=benergy_api_dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    working_dir: /usr/src/frontend
+    volumes:
+      - ./frontend/:/usr/src/frontend/
+      - /usr/src/frontend/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port ${FRONTEND_PORT:-8080}
+    ports:
+      - 8080:8080
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:

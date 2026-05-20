@@ -1,0 +1,43 @@
+services:
+  web:
+    image: ${CI_REGISTRY_IMAGE}:${WEB_DOCKER_IMAGE_TAG}
+    restart: always
+    command: gunicorn project.wsgi:application --bind 0.0.0.0:${BACKEND_PORT:-8000}
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+    expose:
+      - ${BACKEND_PORT:-8000}
+    env_file:
+      - .env.prod
+    depends_on:
+      - db
+  db:
+    image: postgres:17
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env.prod.db
+  frontend:
+    image: ${CI_REGISTRY_IMAGE}:${FRONTEND_DOCKER_IMAGE_TAG}
+    restart: always
+    expose:
+      - ${FRONTEND_PORT:-3000}
+    env_file:
+      - .env.prod
+    depends_on:
+      - db
+  nginx:
+    image: ${CI_REGISTRY_IMAGE}:${NGINX_DOCKER_IMAGE_TAG}
+    restart: always
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+      - ./nginx/certs:/etc/nginx/certs:ro
+    ports:
+      - 80:${NGINX_PORT_HTTP:-8080}
+      - 443:${NGINX_PORT_HTTPS:-8443}
+    depends_on:
+      - web
+volumes:
+  postgres_data:
+  static_volume:

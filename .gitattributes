@@ -1,0 +1,5 @@
+# Normalise line endings to LF on commit so shell scripts run in Linux containers
+* text=auto eol=lf
+
+# Treat shell scripts explicitly as text with LF
+*.sh text eol=lf

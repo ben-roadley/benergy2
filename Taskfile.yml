@@ -1,0 +1,472 @@
+version: '3'
+
+vars:
+  COMPOSE: docker compose
+  COMPOSE_FILES: -f docker-compose.yml
+  COMPOSE_FILES_PROD: --env-file .env.prod -f docker-compose.prod.yml
+
+  BACK: web
+  FRONT: frontend
+  PROXY: nginx
+  BACK_PROD: web
+  FRONT_PROD: frontend
+  PROXY_PROD: nginx
+  DEV_DOTENV: &DEV_DOTENV
+    - '.env.dev'
+  BUILD_DOTENV: &BUILD_DOTENV
+    - '.env.gitlab-ci'
+  PROD_DOTENV: &PROD_DOTENV
+    - '.env.prod'
+
+tasks:
+  default:
+    desc: Overview of project status
+    silent: true
+    dotenv: *DEV_DOTENV
+    cmds:
+      - |
+        printf '\033c'
+
+        URL="http://localhost:$FRONTEND_PORT"
+
+        echo ""
+        echo "========================================"
+        echo "     🌐 Benergy Development Console"
+        echo "========================================"
+        echo ""
+        echo "Project URL:"
+        echo "  → $URL"
+        echo ""
+
+        echo "Docker Status:"
+        {{.COMPOSE}} {{.COMPOSE_FILES}} ps
+        echo ""
+
+        echo "Helpful commands:"
+
+        echo "  task build:        - Build the whole stack"
+        echo "  task clean:        - Clean up unused containers/images/volumes"
+        echo "  task default:      - Overview of project status"
+        echo "  task down:         - Stop & remove containers (network stays)"
+        echo "  task logs:         - Tail logs for all or specific service: task logs -- web"
+        echo "  task ps:           - List running containers"
+        echo "  task restart:      - Restart all services"
+        echo "  task sh:           - Shell into any service (usage: task sh -- frontend)"
+        echo "  task up:           - Start the whole stack (detached)"
+        echo ""
+        echo "Backend (Django) commands:"
+        echo "  task b:manage:   - Run manage.py commands (usage: task be:manage -- shell)"
+        echo "  task b:test:     - Run Django tests"
+        echo ""
+        echo "Frontend (Vue) commands:"
+        echo "  task f:install:    - Install npm deps (inside container)"
+        echo "  task f:test:       - Run frontend tests"
+        echo "  task f:e2e:        - Run Playwright E2E tests (requires stack to be running, add --headed for more fun)"
+        echo ""
+        echo "Build commands for production deployment:"
+        echo "  task build:all-arm64:   - Build production images for ARM64 and push to registry"
+        echo "  task build:all-amd64:   - Build production images for AMD64 and push to registry"
+
+        echo ""
+        echo "Run 'task --list' to see all tasks."
+        echo ""
+
+  # --------------------
+  # General lifecycle
+  # --------------------
+  build:
+    desc: Build the whole stack
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} up --build"
+
+  up:
+    desc: Start the whole stack (detached)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} up -d"
+
+  down:
+    desc: Stop & remove containers (network stays)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} down"
+
+  restart:
+    desc: Restart all services
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} restart"
+
+  logs:
+    desc: "Tail logs for all or specific service: task logs -- web"
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} logs -f {{.CLI_ARGS}}"
+
+  ps:
+    desc: List running containers
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} ps"
+
+
+  # --------------------
+  # Backend (Django)
+  # --------------------
+  b:shell:
+    desc: Interactive shell inside web/api container
+    dotenv: *DEV_DOTENV
+    interactive: true
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} bash"
+
+  b:manage:
+    desc: "Run manage.py commands (usage: task be:manage -- shell)"
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} python manage.py {{.CLI_ARGS}}"
+
+  b:test:
+    desc: Run Django tests
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} python -m pytest . {{.CLI_ARGS}}"
+
+  b:coverage:
+    desc: Run Django tests and enforce 100% coverage (fails if below 100%)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} python -m pytest . --cov-fail-under=100 {{.CLI_ARGS}}"
+
+  b:lint:
+    desc: Run linters (isort, black, flake8)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'isort /usr/src/api'"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'black /usr/src/api'"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'flake8 /usr/src/api'"
+
+
+  # --------------------
+  # Frontend (Vue)
+  # --------------------
+  f:shell:
+    desc: Shell inside Vue frontend container
+    dotenv: *DEV_DOTENV
+    interactive: true
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.FRONT}} sh"
+
+  f:install:
+    desc: Install npm deps (inside container)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.FRONT}} npm install"
+
+  f:dev:
+    desc: Run Vite dev server (useful if not auto-starting)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.FRONT}} npm run dev {{.CLI_ARGS}}"
+
+  f:test:
+    desc: Run frontend tests
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.FRONT}} npm test -- --run {{.CLI_ARGS}}"
+
+  f:e2e:
+    desc: Run Playwright E2E tests (requires stack to be running, add --headed for more fun)
+    cmds:
+      - cd frontend && npx playwright test {{.CLI_ARGS}}
+
+  f:build:
+    desc: Build production bundle
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.FRONT}} npm run build"
+
+
+  # --------------------
+  # Dev Utilities
+  # --------------------
+  sh:
+    desc: "Shell into any service (usage: task sh -- frontend)"
+    dotenv: *DEV_DOTENV
+    interactive: true
+    cmds:
+      - '{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.CLI_ARGS}} sh'
+
+  clean:
+    desc: Remove unused containers/images/volumes (safe cleanup)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - '{{.COMPOSE}} {{.COMPOSE_FILES}} down --remove-orphans'
+      - docker image prune -f
+      - docker volume prune -f
+
+  nuke:
+    desc: "⚠️ DANGEROUS: Remove containers, images, volumes for this project"
+    dotenv: *DEV_DOTENV
+    prompt: "Delete ALL containers/images/volumes from this compose project?"
+    cmds:
+      - '{{.COMPOSE}} {{.COMPOSE_FILES}} down --rmi all --volumes --remove-orphans'
+  
+  print-urls:
+    desc: Print the URL to access the app in the browser
+    dotenv: *DEV_DOTENV
+    cmds:
+      - |
+        echo "Access the frontend at: http://localhost:$FRONTEND_PORT"
+      - |
+        echo "Access the DRF Browsable API at: http://localhost:$BACKEND_PORT/api/"
+    silent: true
+    
+  f:chrome:
+    desc: Open the frontend in Google Chrome (Windows)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - |
+        URL="http://localhost:$FRONTEND_PORT"
+        echo "Opening Chrome at $URL"
+        cmd.exe /C start chrome "$URL"
+    silent: true
+    
+  b:chrome:
+    desc: Open the API in Google Chrome (Windows)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - |
+        URL="http://localhost:$BACKEND_PORT"
+        echo "Opening Chrome at $URL"
+        cmd.exe /C start chrome "$URL"
+    silent: true
+
+
+
+  # --------------------
+  # Docker image building & pushing (for production deployment)
+  # --------------------
+  build:all-amd64:
+    desc: Build production images for AMD64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/amd64
+      WEB_DOCKER_IMAGE_TAG: web_amd64
+      NGINX_DOCKER_IMAGE_TAG: nginx_amd64
+      FRONTEND_DOCKER_IMAGE_TAG: frontend_amd64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}  -f api/Dockerfile.prod api
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:prod-amd64 complete!"
+        
+  build:web-amd64:
+    desc: Build API production image for AMD64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/amd64
+      WEB_DOCKER_IMAGE_TAG: web_amd64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}  -f api/Dockerfile.prod api
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:web-amd64 complete!"
+        
+  build:frontend-amd64:
+    desc: Build frontend production image for AMD64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/amd64
+      FRONTEND_DOCKER_IMAGE_TAG: frontend_amd64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}  -f frontend/Dockerfile.prod frontend
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:frontend-amd64 complete!"
+        
+  build:nginx-amd64:
+    desc: Build nginx production image for AMD64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/amd64
+      NGINX_DOCKER_IMAGE_TAG: nginx_amd64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}  -f nginx/Dockerfile nginx
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:nginx-amd64 complete!"
+
+  build:all-arm64:
+    desc: Build production images for ARM64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/arm64/v8
+      WEB_DOCKER_IMAGE_TAG: web_arm64
+      NGINX_DOCKER_IMAGE_TAG: nginx_arm64
+      FRONTEND_DOCKER_IMAGE_TAG: frontend_arm64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}} -f api/Dockerfile.prod api
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:all-arm64 complete!"
+
+  build:all-multi:
+    desc: Build multi-arch images (amd64 + arm64) and push to GHCR
+    dotenv: *BUILD_DOTENV
+    vars:
+      VERSION: '{{.RELEASE_VERSION | default "dev"}}'
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:web-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:web-latest -f api/Dockerfile.prod --push api
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:nginx-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:nginx-latest -f nginx/Dockerfile --push nginx
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:frontend-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:frontend-latest -f frontend/Dockerfile.prod --push frontend
+
+      - |
+        echo "✅ build:all-multi complete! (version: {{.VERSION}})"
+
+  build:web-arm64:
+    desc: Build API production image for ARM64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/arm64/v8
+      WEB_DOCKER_IMAGE_TAG: web_arm64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}} -f api/Dockerfile.prod api
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:web-arm64 complete!"
+
+  build:frontend-arm64:
+    desc: Build frontend production image for ARM64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/arm64/v8
+      FRONTEND_DOCKER_IMAGE_TAG: frontend_arm64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:frontend-arm64 complete!"
+
+  build:nginx-arm64:
+    desc: Build nginx production image for ARM64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/arm64/v8
+      NGINX_DOCKER_IMAGE_TAG: nginx_arm64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:nginx-arm64 complete!"
+
+
+
+# --------------------
+# Production
+# --------------------
+  prod:up:
+    desc: Start the production stack (detached)
+    dotenv: *PROD_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} up -d"
+
+  prod:down:
+    desc: Stop & remove production containers
+    dotenv: *PROD_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} down"
+
+  prod:restart:
+    desc: Restart production services
+    dotenv: *PROD_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} restart"
+
+  prod:logs:
+    desc: "Tail production logs for all or specific service: task prod:logs -- web"
+    dotenv: *PROD_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} logs -f {{.CLI_ARGS}}"
+
+  prod:ps:
+    desc: List production containers
+    dotenv: *PROD_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} ps"
+
+  # Backend prod tasks (mirror dev but use prod vars)
+  prod:b:shell:
+    desc: Interactive shell in production web container
+    dotenv: *PROD_DOTENV
+    interactive: true
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec {{.BACK_PROD}} bash"
+
+  prod:b:manage:
+    desc: "Run manage.py in production (usage: task prod:b:manage -- shell)"
+    dotenv: *PROD_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec {{.BACK_PROD}} python manage.py {{.CLI_ARGS}}"
+
+  # Nginx prod tasks
+  prod:proxy:reload:
+    desc: Reload production nginx config
+    dotenv: *PROD_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec {{.PROXY_PROD}} nginx -s reload"
+
+  prod:proxy:shell:
+    desc: Shell into the nginx reverse proxy container
+    dotenv: *PROD_DOTENV
+    interactive: true
+    cmds:
+      - '{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.PROXY}} sh'
+
+  # Utilities for prod
+  prod:clean:
+    desc: Clean production containers/images/volumes
+    dotenv: *PROD_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} down --remove-orphans"
+      - docker image prune -f
+      - docker volume prune -f
+
+  prod:print-urls:
+    desc: Print production URLs
+    dotenv: *PROD_DOTENV
+    cmds:
+      - |
+        echo "??? Access production frontend at: https://your-prod-domain.com"  # Adjust based on your prod setup
+      - |
+        echo "??? Access production API at: https://your-prod-api.com"
+    silent: true
+
+  # Add prod-specific tasks as needed, e.g., for deployment
+  prod:deploy:
+    desc: Deploy to production (customize based on your CI/CD)
+    dotenv: *PROD_DOTENV
+    cmds:
+      - echo "Pull latest images, run migrations, etc."
+      - docker login {{.CI_REGISTRY}} -u {{.CI_REGISTRY_USER}} -p {{.CI_REGISTRY_PASSWORD}}
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} up -d --pull always "
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec web python manage.py collectstatic --no-input --clear"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec web python manage.py migrate --noinput"

@@ -1,0 +1,23 @@
+/* Shared styles for workout session phases to avoid duplication */
+.phase-section {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.action-btn {
+  margin-top: 3rem;
+  padding-left: 3rem;
+  padding-right: 3rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  font-size: 1.25rem;
+  aspect-ratio: 1 / 1;
+}
+
+.phase-label {
+  font-size: 1.125rem;
+  color: var(--p-surface-500);
+}

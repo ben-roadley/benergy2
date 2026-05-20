@@ -1,0 +1,55 @@
+name: CI - Dev
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  backend-tests:
+    name: Backend tests (pytest + coverage)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install backend deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r api/requirements/dev.txt
+
+      - name: Run backend tests with coverage (enforce 100% for services)
+        run: |
+          pytest api --maxfail=1 --disable-warnings -q --cov=workout.services --cov-fail-under=100
+
+  frontend-tests:
+    name: Frontend tests (npm)
+    runs-on: ubuntu-latest
+    needs: backend-tests
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test -- --run
