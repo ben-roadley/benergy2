@@ -1,11 +1,15 @@
-from django.urls import path
+from django.urls import include, path
+from rest_framework import routers
 
-from catalog.views import ExerciseDefinitionListView
+from catalog.views import ExerciseDefinitionViewSet
+
+router = routers.DefaultRouter()
+router.register(
+    r"exercise-definitions",
+    ExerciseDefinitionViewSet,
+    basename="exercise-definition",
+)
 
 urlpatterns = [
-    path(
-        "exercise-definitions/",
-        ExerciseDefinitionListView.as_view(),
-        name="exercise-definition-list",
-    ),
+    path("", include(router.urls)),
 ]

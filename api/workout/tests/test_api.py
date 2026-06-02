@@ -244,6 +244,15 @@ class WorkoutAPITest(APITestCase):
         res = self.client.post(results_url, {"results": []}, format="json")
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
+
+    def test_last_workout_session_returns_404_when_none_exist(self):
+        self.client.force_authenticate(user=self.user1)
+
+        res = self.client.get(reverse("last-workout-session"))
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(res.data["message"], "No workout sessions found.")
+
     def test_cannot_retrieve_other_users_workout_returns_404(self):
         self.client.force_authenticate(user=self.user1)
         res = self.client.get(reverse("workout-detail", args=[self.workout2.id]))
