@@ -2,6 +2,11 @@
   <div class="home-page">
     <h1 class="home-title">Your Workouts</h1>
 
+    <!-- Last workout banner -->
+    <div v-if="lastSession && !ws.isActive && !loading" class="last-session-banner">
+      <p class="resume-workout-name">Last session : <b>{{ lastSession.workout_name }}</b>, {{ calculateDaysAgo(lastSession.completed_at) }} days ago</p>
+    </div>
+
     <!-- Resume banner -->
     <div v-if="ws.isActive" class="resume-banner">
       <p class="resume-workout-name">Workout in progress: {{ ws.workout.name }}</p>
@@ -91,19 +96,24 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import { useWorkoutStore } from '@/stores/workout'
-import { fetchWorkouts } from '@/services/workout'
+import { fetchWorkouts, fetchLastWorkoutSession } from '@/services/workout'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
-import Tooltip from 'primevue/tooltip'
 
-const auth = useAuthStore()
 const ws = useWorkoutStore()
 const router = useRouter()
 const workouts = ref([])
+const lastSession = ref([])
 const loading = ref(true)
 const showTips = ref(false)
+
+function calculateDaysAgo(isoString) {
+  const now = new Date()
+  const date = new Date(isoString)
+  const diffTime = Math.abs(now - date)
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24))
+}
 
 onMounted(async () => {
   // Try restoring a saved session
@@ -111,6 +121,7 @@ onMounted(async () => {
 
   try {
     workouts.value = await fetchWorkouts()
+    lastSession.value = await fetchLastWorkoutSession()
   } finally {
     loading.value = false
   }
@@ -137,6 +148,20 @@ onMounted(async () => {
 .resume-banner {
   margin-bottom: 1.5rem;
   padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #facc15;
+  background-color: #fefce8;
+  color: #713f12;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.last-session-banner {
+  margin-bottom: 1.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   border-radius: 0.5rem;
   border: 1px solid #facc15;
   background-color: #fefce8;

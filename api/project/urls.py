@@ -6,7 +6,7 @@ from rest_framework import routers
 from users.auth_views import login_view, logout_view, session_view
 from users.profile_views import profile_clear_view, profile_options_view, profile_view
 from users.views import UserViewSet
-from workout.views import WorkoutViewSet, submit_workout_results
+from workout.views import WorkoutViewSet
 
 router = routers.DefaultRouter()
 router.register(r"users", UserViewSet)
@@ -14,8 +14,8 @@ router.register(r"workouts", WorkoutViewSet, basename="workout")
 
 
 urlpatterns = [
-    path("api/workouts/results/", submit_workout_results, name="workout-results"),
     path("api/", include("catalog.urls")),
+    path("api/", include("workout.urls")),
     path("api/", include(router.urls)),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

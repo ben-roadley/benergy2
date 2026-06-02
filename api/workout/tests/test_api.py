@@ -253,6 +253,19 @@ class WorkoutAPITest(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(res.data["message"], "No workout sessions found.")
 
+    def test_last_workout_session_returns_latest_session_details(self):
+        self.client.force_authenticate(user=self.user1)
+
+        older_log = WorkoutLog.objects.create(user=self.user1, workout=self.workout1)
+        latest_log = WorkoutLog.objects.create(user=self.user1, workout=self.workout1)
+
+        res = self.client.get(reverse("last-workout-session"))
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["workout_name"], self.workout1.name)
+        self.assertEqual(res.data["completed_at"], latest_log.completed_at.isoformat().replace("+00:00", "Z"))
+        self.assertNotEqual(older_log.completed_at, latest_log.completed_at)
+
     def test_cannot_retrieve_other_users_workout_returns_404(self):
         self.client.force_authenticate(user=self.user1)
         res = self.client.get(reverse("workout-detail", args=[self.workout2.id]))

@@ -75,6 +75,15 @@ class WorkoutSerializer(serializers.ModelSerializer):
         return is_workout_editable(workout=obj)
 
 
+
+class LastWorkoutSessionSerializer(serializers.Serializer):
+    """Serializer for the last workout session endpoint."""
+
+    workout_name = serializers.CharField(read_only=True)
+    completed_at = serializers.DateTimeField(read_only=True)
+
+
+
 class SetOfRepsWriteSerializer(serializers.Serializer):
     """Write-oriented serializer for SetOfReps used inside editor payloads."""
 

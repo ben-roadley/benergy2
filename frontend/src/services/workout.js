@@ -5,6 +5,11 @@ export async function fetchWorkouts() {
   return data
 }
 
+export async function fetchLastWorkoutSession() {
+  const { data } = await api.get('/api/workouts/last-session/')
+  return data
+}
+
 export async function fetchWorkout(id) {
   const { data } = await api.get(`/api/workouts/${id}/`)
   return data

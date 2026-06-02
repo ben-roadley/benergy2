@@ -22,6 +22,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from users.services import get_or_create_profile
 from workout.serializers import (
+    LastWorkoutSessionSerializer,
     WarmupSuggestionsResponseSerializer,
     WorkoutEditorSerializer,
     WorkoutListSerializer,
@@ -240,3 +241,25 @@ def submit_workout_results(request):
     return Response(
         {"message": "Workout results saved."}, status=status.HTTP_201_CREATED
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@extend_schema(
+    responses={200: LastWorkoutSessionSerializer, 404: None},
+    summary="Fetch last workout session details",
+)
+def last_workout_session(request):
+    """Endpoint to fetch the user's last workout session details."""
+
+    w = WorkoutLog.objects.filter(user=request.user).order_by("-completed_at")[:1]
+
+    if not w:
+        return Response(
+            {"message": "No workout sessions found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = LastWorkoutSessionSerializer(
+        {"workout_name": w[0].workout.name, "completed_at": w[0].completed_at}
+    )
+    return Response(serializer.data, status=status.HTTP_200_OK)
