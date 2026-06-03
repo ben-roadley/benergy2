@@ -120,8 +120,19 @@ onMounted(async () => {
   if (!ws.isActive) ws.loadSaved()
 
   try {
-    workouts.value = await fetchWorkouts()
     lastSession.value = await fetchLastWorkoutSession()
+  } catch (err) {
+    if (err.response && err.response.status === 404)  {
+      // No previous session, not an error
+      lastSession.value = null
+    }
+    else {
+      console.error("Error fetching last workout session:", err)
+    }
+  }
+
+  try {
+    workouts.value = await fetchWorkouts()
   } finally {
     loading.value = false
   }
