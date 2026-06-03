@@ -33,6 +33,14 @@ task b:shell           # open a shell in the backend container
 task f:shell           # open a shell in the frontend container
 ```
 
+To get the backend up and running with test data:
+
+```bash
+task b:manage -- migrate                        # (necessary) django migrate command
+task b:manage -- createsuperuser                # (necessary) django create a super user
+task b:manage -- import_exercise_definitions    # imports all exercise definitions in the database
+task b:manage -- init_db                        # create a test user with workout and simulated session history
+
 Notes:
 - Do NOT run `python manage.py` on the host. Use `task b:manage` or `task b:shell` to run management commands inside the backend container.
 - Use `.env.dev` for development and `.env.prod` for production.
@@ -117,9 +125,3 @@ docker pull ghcr.io/ben-roadley/benergy:web_arm64
 docker pull ghcr.io/ben-roadley/benergy:frontend_arm64
 docker compose -f docker-compose.prod.yml up -d
 ```
-
-- Consider a small deploy script on the Pi to stop the stack, pull new images, and restart. Optionally run a tool like `watchtower` to auto-update containers.
-
-Notes & recommendations
-- For a personal project this workflow is simple and effective: dev branch runs tests, merging to `main` creates a release tag and publishes images to GHCR.
-- If you prefer the `Taskfile.yml` to be the single source of truth for tests as well, we can add `b:test-local` / `f:test-local` task targets and call `task` from the `ci-dev.yml` workflow instead.
