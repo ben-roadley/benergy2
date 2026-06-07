@@ -52,6 +52,18 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/workouts/manage',
+      name: 'workout-manage',
+      component: () => import('@/components/WorkoutManagementView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/workouts/logs-and-insights',
+      name: 'workout-logs-and-insights',
+      component: () => import('@/components/WorkoutLogsAndInsightsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('@/components/ProfileView.vue'),

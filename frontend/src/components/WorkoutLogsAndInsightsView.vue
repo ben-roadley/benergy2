@@ -1,47 +1,44 @@
 <template>
   <div class="home-page">
-    <h1 class="home-title">Welcome, {{ auth.user?.display_name || auth.user?.username }} 💪</h1>
+    <h1 class="home-title">Workout logs & insights</h1>
 
-    <div class="workout-list">
-      <div class="workout-item">
-        <div class="workout-item-row">
-          <Button
-            label="Start a workout"
-            severity="secondary"
-            class="workout-btn"
-            @click="router.push('/workouts/start')"
-          />
-        </div>
-      </div>
-      <div class="workout-item">
-        <div class="workout-item-row">
-          <Button
-            label="Workout logs & insights"
-            severity="secondary"
-            class="workout-btn"
-            @click="router.push('/workouts/logs-and-insights')"
-          />
-        </div>
-      </div>
-      <div class="workout-item">
-        <div class="workout-item-row">
-          <Button
-            label="Manage workouts"
-            severity="secondary"
-            class="workout-btn"
-            @click="router.push('/workouts/manage')"
-          />
-        </div>
-      </div>
-      <div class="workout-item">
-        <div class="workout-item-row">
-          <Button
-            label="Evening stretches"
-            severity="secondary"
-            class="workout-btn"
-            @click="router.push('/evening-stretches')"
-          />
-        </div>
+    <div v-if="loading" class="loading-text">Loading workouts...</div>
+
+    <div v-else-if="workouts.length === 0" class="empty-state">
+      <p class="empty-text">No workouts yet.</p>
+      <Button
+        label="Create your first workout"
+        icon="pi pi-plus"
+        size="large"
+        @click="router.push('/workouts/new')"
+      />
+    </div>
+
+    <div v-else class="workout-list">      
+      <div v-for="w in workouts" :key="w.id" class="workout-item">
+        <Toolbar class="workout-item-row">
+          <template #start>
+            <Message severity="success">{{ w.name }}</Message>
+          </template>
+          <template #end>
+            <Button
+              icon="pi pi-history"
+              severity="secondary"
+              text
+              size="small"
+              v-tooltip.top="'Training logs'"
+              @click="router.push(`/workouts/${w.id}/logs`)"
+            />
+            <Button
+              icon="pi pi-chart-line"
+              severity="secondary"
+              text
+              size="small"
+              v-tooltip.top="'Insights'"
+              @click="router.push(`/workouts/${w.id}/insights`)"
+            />
+          </template>
+        </Toolbar>
       </div>
     </div>
 
@@ -49,15 +46,24 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useWorkoutStore } from '@/stores/workout'
+import { fetchWorkouts } from '@/services/workout'
 import Button from 'primevue/button'
+import Toolbar from 'primevue/toolbar'
+import Message from 'primevue/message'
 
-const auth = useAuthStore()
-const ws = useWorkoutStore()
 const router = useRouter()
+const workouts = ref([])
+const loading = ref(true)
 
+onMounted(async () => {
+  try {
+    workouts.value = await fetchWorkouts()
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>
@@ -80,6 +86,20 @@ const router = useRouter()
 .resume-banner {
   margin-bottom: 1.5rem;
   padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #facc15;
+  background-color: #fefce8;
+  color: #713f12;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.last-session-banner {
+  margin-bottom: 1.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   border-radius: 0.5rem;
   border: 1px solid #facc15;
   background-color: #fefce8;

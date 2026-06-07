@@ -30,10 +30,15 @@ async function createWorkout(page, name) {
   await expect(page).toHaveURL('/')
 }
 
-// Helper: drives through all phases of a 1-set workout to completion.
-async function runFullSession(page, workoutName) {
+async function startWorkout(page, workoutName) {
+  await page.goto('/workouts/start')
   await page.getByRole('button', { name: workoutName }).click()
   await expect(page).toHaveURL(/\/workout\/\d+/)
+}
+
+// Helper: drives through all phases of a 1-set workout to completion.
+async function runFullSession(page, workoutName) {
+  await startWorkout(page, workoutName)
 
   // Warmup → Exercise
   await page.getByRole('button', { name: 'Go', exact: true }).click()
@@ -68,9 +73,7 @@ test.describe.serial('Workout Session', () => {
   // ---- Phase rendering ----
 
   test('shows the warmup phase when a session is started', async ({ page }) => {
-    await page.getByRole('button', { name: workoutName }).click()
-
-    await expect(page).toHaveURL(/\/workout\/\d+/)
+    await startWorkout(page, workoutName)
     await expect(page.locator('.phase-label')).toContainText('Warm up')
     await expect(page.getByRole('button', { name: 'Go', exact: true })).toBeVisible()
   })
@@ -78,8 +81,7 @@ test.describe.serial('Workout Session', () => {
   // ---- Warm-up suggestions ----
 
   test('shows the warm-up suggestions section with heading and refresh button', async ({ page }) => {
-    await page.getByRole('button', { name: workoutName }).click()
-    await expect(page).toHaveURL(/\/workout\/\d+/)
+    await startWorkout(page, workoutName)
 
     await expect(page.locator('.suggestions-section')).toBeVisible()
     await expect(page.locator('.suggestions-title')).toContainText('Warm-up ideas')
@@ -87,8 +89,7 @@ test.describe.serial('Workout Session', () => {
   })
 
   test('shows suggestions or error state (never stays in loading indefinitely)', async ({ page }) => {
-    await page.getByRole('button', { name: workoutName }).click()
-    await expect(page).toHaveURL(/\/workout\/\d+/)
+    await startWorkout(page, workoutName)
 
     // The suggestions section must settle into either a list or an error — not a spinner — within 10 s.
     await expect(
@@ -118,8 +119,9 @@ test.describe.serial('Workout Session', () => {
 
   test('editing the workout after a session shows the locked state banner', async ({ page }) => {
     // The workout was completed in a previous serial test, so it is now locked.
+    await page.goto('/workouts/manage')
     const row = page.locator('.workout-item-row').filter({ hasText: workoutName })
-    await row.getByRole('button').nth(1).click()
+    await row.getByRole('button', { name: workoutName }).click()
 
     await expect(page).toHaveURL(/\/workouts\/\d+\/edit/)
     await expect(page.getByText('Editing limited:')).toBeVisible()

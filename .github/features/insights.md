@@ -6,17 +6,19 @@ Provides a visual analytics page for each workout, showing training volume (sets
 
 ## User Flow
 
-1. From the home screen, the user taps the **chart-line icon** next to a workout (third icon in the row, after pencil and history).
-2. The browser navigates to `/workouts/:id/insights`.
-3. The page loads and calls `GET /api/workouts/{id}/insights/volume/`.
-4. An educational blurb ("What is training volume?") is shown at the top.
-5. If `bodyweight_kg` is `null` and any exercise is bodyweight-only, a prompt to set profile weight is displayed.
-6. If only one session has been logged, a banner encourages the user to log more sessions.
-7. The **Total Workout Load** chart is rendered first (sum of all exercise volumes per session).
-8. Per-exercise charts follow, ordered by exercise order. Each weighted exercise shows volume in kg; bodyweight exercises show volume calculated from profile weight with a labelled note.
-9. If no sessions have been logged, an empty state is shown in place of all charts.
-10. If the API call fails, an error message is shown with a **Retry** button.
-11. The back button navigates to `/`.
+1. From the home screen, the user taps **Workout logs & insights**.
+2. The browser navigates to `/workouts/logs-and-insights`.
+3. On the hub page, the user taps the **chart-line icon** next to a workout.
+4. The browser navigates to `/workouts/:id/insights`.
+5. The page loads and calls `GET /api/workouts/{id}/insights/volume/`.
+6. An educational blurb ("What is training volume?") is shown at the top.
+7. If `bodyweight_kg` is `null` and any exercise is bodyweight-only, a prompt to set profile weight is displayed.
+8. If only one session has been logged, a banner encourages the user to log more sessions.
+9. The **Total Workout Load** chart is rendered first (sum of all exercise volumes per session).
+10. Per-exercise charts follow, ordered by exercise order. Each weighted exercise shows volume in kg; bodyweight exercises show volume calculated from profile weight with a labelled note.
+11. If no sessions have been logged, an empty state is shown in place of all charts.
+12. If the API call fails, an error message is shown with a **Retry** button.
+13. The back button navigates to `/workouts/logs-and-insights`.
 
 ## Data Model
 
@@ -65,9 +67,10 @@ effective_weight =
 
 ## Frontend
 
+- **Logs and insights hub:** `frontend/src/components/WorkoutLogsAndInsightsView.vue` — lists workouts and routes to logs or insights for each one
 - **Insights page:** `frontend/src/components/WorkoutInsightsView.vue` — manages its own local state (no Pinia store). Fetches on mount, renders loading/error/empty states and chart cards. Exercises are sorted by `order` client-side via a computed property.
-- **Home screen button:** `frontend/src/components/HomeView.vue` — `pi pi-chart-line` button added to `.workout-item-row`, after the existing pencil and history icons.
-- **Route:** `/workouts/:id/insights` (`name: 'workout-insights'`) in `frontend/src/router/index.js`.
+- **Home screen button:** `frontend/src/components/HomeView.vue` — `Workout logs & insights` button routes to the hub page
+- **Routes:** `/workouts/logs-and-insights` (`name: 'workout-logs-and-insights'`) and `/workouts/:id/insights` (`name: 'workout-insights'`) in `frontend/src/router/index.js`.
 - **Service:** `fetchWorkoutVolumeInsights(id)` in `frontend/src/services/workout.js` — `GET /api/workouts/{id}/insights/volume/`.
 - **Charting:** PrimeVue `<Chart type="line">` (Chart.js v4). `chart.js` is a direct frontend dependency. Chart options use `responsive: true, maintainAspectRatio: false` with a fixed-height wrapper (`height: 200px`) for correct mobile rendering.
 - **Pinia stores used:** none (page-local state only). Profile weight is supplied by the API response (`bodyweight_kg`) rather than fetched from `useProfileStore`.

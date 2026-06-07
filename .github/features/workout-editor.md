@@ -5,8 +5,8 @@ Allows users to create new workouts or edit existing ones. A workout is a named 
 
 ## User Flow
 
-1. **Create**: User clicks "Create new workout" on home → navigated to `/workouts/new` → blank form with one default exercise appears.
-2. **Edit**: User clicks the edit pencil on a workout card → navigated to `/workouts/:id/edit` → form loads existing data.
+1. **Create**: User clicks "Manage workouts" on home → navigated to `/workouts/manage` → on the empty state or footer button, clicks "Create new workout" → `/workouts/new` → blank form with one default exercise appears.
+2. **Edit**: User clicks "Manage workouts" on home → navigated to `/workouts/manage` → clicks a workout button → `/workouts/:id/edit` → form loads existing data.
 3. User sets the workout name.
 4. User adds, removes, and reorders exercises via drag-and-drop cards.
 5. User selects each exercise using the catalog autocomplete (type ≥ 2 chars → dropdown shows name, category, equipment, primary muscles). The "Add exercise" button is at the bottom of the exercise list.
@@ -65,8 +65,9 @@ Allows users to create new workouts or edit existing ones. A workout is a named 
 
 ## Frontend
 
+- **Manage page:** `frontend/src/components/WorkoutManagementView.vue` — lists workouts and routes into create/edit flows
 - **Page/Component:** `frontend/src/components/WorkoutEditorView.vue`
-- **Routes:** `/workouts/new` (create) and `/workouts/:id/edit` (edit)
+- **Routes:** `/workouts/manage` (hub), `/workouts/new` (create), and `/workouts/:id/edit` (edit)
 - **Store (Pinia):** None — form state is managed with local `ref`s inside the component
 - **Services:** `fetchWorkout()`, `createWorkout()`, `updateWorkout()`, `patchWorkout()`, `searchExerciseDefinitions()` from `frontend/src/services/workout.js`
 - **Key UI elements:** InputText for name, draggable exercise cards, PrimeVue `AutoComplete` for exercise selection (with `forceSelection`, rich `#option` slot, 250ms debounce), per-set inline edit table, InputNumber for `rest_time_after` per exercise card (0–300 s, step 5), "Add exercise" button at the bottom of the list (hidden when locked)

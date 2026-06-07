@@ -1,25 +1,10 @@
 <template>
   <div class="home-page">
-    <h1 class="home-title">Your Workouts</h1>
+    <h1 class="home-title">Manage Workouts</h1>
 
-    <!-- Last workout banner -->
-    <div v-if="lastSession && !ws.isActive && !loading" class="last-session-banner">
-      <p class="resume-workout-name">Last session : <b>{{ lastSession.workout_name }}</b>, {{ calculateDaysAgo(lastSession.completed_at) }} days ago</p>
-    </div>
+    <div v-if="loading" class="loading-text">Loading workouts...</div>
 
-    <!-- Resume banner -->
-    <div v-if="ws.isActive" class="resume-banner">
-      <p class="resume-workout-name">Workout in progress: {{ ws.workout.name }}</p>
-      <div class="resume-actions">
-        <Button label="Resume" @click="router.push(`/workout/${ws.workout.id}`)" />
-        <Button label="Abandon" severity="danger" outlined @click="ws.abandon()" />
-      </div>
-    </div>
-
-
-    <div v-if="!ws.isActive && loading" class="loading-text">Loading workouts...</div>
-
-    <div v-else-if="!ws.isActive && workouts.length === 0" class="empty-state">
+    <div v-else-if="workouts.length === 0" class="empty-state">
       <p class="empty-text">No workouts yet.</p>
       <Button
         label="Create your first workout"
@@ -29,76 +14,42 @@
       />
     </div>
 
-    <div v-else-if="!ws.isActive" class="workout-list">
+    <div v-else class="workout-list">
       <div v-for="w in workouts" :key="w.id" class="workout-item">
         <div class="workout-item-row">
           <Button
             :label="w.name"
             severity="secondary"
             class="workout-btn"
-            @click="router.push(`/workout/${w.id}`)"
+            @click="router.push(`/workouts/${w.id}/edit`)"
           />
         </div>
-        <div v-if="w.is_stagnating" class="stagnation-row">
-          <small class="stagnation-warning">
-            No progress in the last 3 sessions
-          </small>
-          <button class="stagnation-help-btn" @click="showTips = true" aria-label="Stagnation tips">?</button>
-        </div>
       </div>
+      <Button
+        label="Create new workout"
+        icon="pi pi-plus"
+        text
+        size="small"
+        class="create-workout-link"
+        @click="router.push('/workouts/new')"
+      />
     </div>
 
-    <Dialog v-model:visible="showTips" header="Tips to break through a plateau" modal :style="{ width: '28rem' }">
-      <ul class="tips-list">
-        <li><strong>Increase rest time</strong> — longer recovery between sets can allow more reps next session.</li>
-        <li><strong>Try a deload</strong> — drop intensity for one session, then come back stronger.</li>
-        <li><strong>Change the variation</strong> — swap for a similar exercise (e.g., diamond push-ups instead of regular).</li>
-        <li><strong>Slow down the tempo</strong> — focus on controlled negatives to build strength.</li>
-        <li><strong>Add a set</strong> — if you can't do more reps per set, add an extra set.</li>
-        <li><strong>Check recovery</strong> — sleep, nutrition, and stress all affect performance.</li>
-      </ul>
-    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useWorkoutStore } from '@/stores/workout'
-import { fetchWorkouts, fetchLastWorkoutSession } from '@/services/workout'
+import { fetchWorkouts } from '@/services/workout'
 import Button from 'primevue/button'
-import Dialog from 'primevue/dialog'
 
-const ws = useWorkoutStore()
 const router = useRouter()
 const workouts = ref([])
-const lastSession = ref([])
 const loading = ref(true)
-const showTips = ref(false)
 
-function calculateDaysAgo(isoString) {
-  const now = new Date()
-  const date = new Date(isoString)
-  const diffTime = Math.abs(now - date)
-  return Math.floor(diffTime / (1000 * 60 * 60 * 24))
-}
 
 onMounted(async () => {
-  // Try restoring a saved session
-  if (!ws.isActive) ws.loadSaved()
-
-  try {
-    lastSession.value = await fetchLastWorkoutSession()
-  } catch (err) {
-    if (err.response && err.response.status === 404)  {
-      // No previous session, not an error
-      lastSession.value = null
-    }
-    else {
-      console.error("Error fetching last workout session:", err)
-    }
-  }
-
   try {
     workouts.value = await fetchWorkouts()
   } finally {

@@ -1,16 +1,16 @@
 # Feature: Workout Log
 
 ## Summary
-Captures every completed workout session as a `WorkoutLog` with associated `WorkoutLogEntry` records, and computes whether the user is "stagnating" (no progress in the last 3 sessions). Log data is surfaced in three places: the post-session summary screen, a stagnation flag on the home page, and a dedicated **Training Logs page** where all past sessions for a workout can be reviewed in a table.
+Captures every completed workout session as a `WorkoutLog` with associated `WorkoutLogEntry` records, and computes whether the user is "stagnating" (no progress in the last 3 sessions). Log data is surfaced in three places: the post-session summary screen, the workout logs and insights hub, and a dedicated **Training Logs page** where all past sessions for a workout can be reviewed in a table.
 
 ## User Flow
 
 1. **Implicit creation**: After the user completes a [Workout Session](workout-session.md), results are submitted via `POST /api/workouts/results/`. The backend creates a `WorkoutLog` and one `WorkoutLogEntry` per set.
 2. **Immediate feedback**: The session's Complete Phase displays a grouped results table (actual vs. target reps/weight for every set) with colour coding.
-3. **Home page indicators**: The workout list on the home page includes an `is_stagnating` flag. If true, a yellow warning banner reads "No progress in the last 3 sessions" and a "?" button opens a tips dialog.
-4. **History button**: Next to each workout's edit pencil, a clock icon (history button) navigates to `/workouts/:id/logs`.
+3. **Home launcher**: The home page includes a **Workout logs & insights** button that opens the logs and insights hub.
+4. **Hub list**: The logs and insights hub lists workouts. Each row has a clock icon that navigates to `/workouts/:id/logs` and a chart icon that navigates to `/workouts/:id/insights`.
 5. **Training Logs page**: Displays all past sessions for the workout, ordered newest-first. Each session shows a locale-formatted date/time heading, then one sub-section per exercise with a compact table: Set | Reps | Weight (shows "—" when no weight was logged).
-6. **Stagnation tips**: The tips dialog lists 6 static suggestions (increase rest, deload, add variation, adjust tempo, add sets, focus on recovery).
+6. **Stagnation tips**: The workout chooser page lists the user's workouts, and if a workout is stagnating a yellow warning row reads "No progress in the last 3 sessions" with a "?" button that opens a tips dialog.
 7. **Implicit lock**: Once a log exists for a workout, the [Workout Editor](workout-editor.md) prevents structural changes to that workout.
 
 ## Data Model
@@ -29,10 +29,12 @@ Captures every completed workout session as a `WorkoutLog` with associated `Work
 
 ## Frontend
 
-- **Home stagnation display:** `frontend/src/components/HomeView.vue` — workout cards show the stagnation banner, tips dialog trigger, and a `pi pi-history` button navigating to the logs page
+- **Home launcher:** `frontend/src/components/HomeView.vue` — includes the `Workout logs & insights` button that opens the logs/insights hub
+- **Logs and insights hub:** `frontend/src/components/WorkoutLogsAndInsightsView.vue` — lists workouts and provides per-workout history and chart actions
+- **Workout chooser:** `frontend/src/components/WorkoutSessionsView.vue` — workout list shows stagnation state and tips dialog trigger
 - **Post-session results display:** `frontend/src/components/WorkoutSession/CompletePhase.vue` — grouped results table
 - **Training Logs page:** `frontend/src/components/WorkoutLogsView.vue` — fetches and renders all past sessions for a workout; manages its own local state (no Pinia store)
-- **Routes:** `/` (home stagnation flag), `/workout/:id` (session complete screen), `/workouts/:id/logs` (training logs history)
+- **Routes:** `/` (home launcher), `/workouts/start` (workout chooser), `/workout/:id` (session complete screen), `/workouts/logs-and-insights` (hub), `/workouts/:id/logs` (training logs history)
 - **Store (Pinia):** Not used by the logs page. `is_stagnating` is returned by the server in the workout list; session results live in `useWorkoutStore` during the session
 - **Services:** `submitWorkoutResults(payload)` and `fetchWorkoutLogs(id)` in `frontend/src/services/workout.js`; backend logic in `workout_log_create()` and `update_targets()` in `api/workout/services.py`
 

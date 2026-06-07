@@ -1,7 +1,7 @@
 <template>
   <div class="editor-page">
     <div class="editor-header">
-      <Button icon="pi pi-arrow-left" text @click="router.push('/')" />
+      <Button icon="pi pi-arrow-left" text @click="router.push('/workouts/manage')" />
       <h1 class="editor-title">{{ isNew ? 'New Workout' : 'Edit Workout' }}</h1>
     </div>
 

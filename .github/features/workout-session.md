@@ -1,18 +1,19 @@
 # Feature: Workout Session
 
 ## Summary
-The "live workout" experience: the user executes a workout set-by-set, logs actual reps and weight, and receives phase-driven feedback (warmup timer, rest countdown, next-set preview). Session state is persisted to localStorage so the user can resume after an interruption. On completion, results are submitted to the backend, which creates a log entry and updates future targets.
+The "live workout" experience starts from the workout chooser page, where the user picks a workout or resumes an active session. Once inside a workout, they execute it set-by-set, log actual reps and weight, and receive phase-driven feedback (warmup timer, rest countdown, next-set preview). Session state is persisted to localStorage so the user can resume after an interruption. On completion, results are submitted to the backend, which creates a log entry and updates future targets.
 
 ## User Flow
 
-1. User clicks a workout name on the home page → navigated to `/workout/:id`.
-2. **Restoration logic**: if an active session is already in memory it is resumed; else if localStorage contains a saved session for this workout it is restored; else the workout is fetched from the backend and a fresh session starts.
-3. **Warmup Phase**: elapsed-time counter shown (MM:SS). User clicks "Go" when ready.
-4. **Exercise Phase**: shows exercise name, set position (Set X of Y), and target reps/weight. User clicks "Done" when the set is complete.
-5. **Log Reps Phase**: user adjusts actual reps (±1) and actual weight (±5 kg) via +/− buttons, then clicks "Next".
-6. **Rest Phase**: countdown from the completed exercise's `rest_time_after` seconds; "Skip" button available; next exercise preview shown. Auto-advances when countdown reaches 0.
-7. Steps 4–6 repeat for every set across all exercises.
-8. **Complete Phase**: results are auto-submitted in the background. A grouped summary table is shown (actual vs. target reps/weight, colour-coded). User clicks "Back to Home".
+1. User clicks **Start a workout** on the home page → navigated to `/workouts/start`.
+2. On the workout chooser page, the user either resumes an active session, restores a saved session from localStorage, or selects a workout to start.
+3. **Restoration logic**: if an active session is already in memory it is resumed; else if localStorage contains a saved session for this workout it is restored; else the workout is fetched from the backend and a fresh session starts.
+4. **Warmup Phase**: elapsed-time counter shown (MM:SS). User clicks "Go" when ready.
+5. **Exercise Phase**: shows exercise name, set position (Set X of Y), and target reps/weight. User clicks "Done" when the set is complete.
+6. **Log Reps Phase**: user adjusts actual reps (±1) and actual weight (±5 kg) via +/− buttons, then clicks "Next".
+7. **Rest Phase**: countdown from the completed exercise's `rest_time_after` seconds; "Skip" button available; next exercise preview shown. Auto-advances when countdown reaches 0.
+8. Steps 5–7 repeat for every set across all exercises.
+9. **Complete Phase**: results are auto-submitted in the background. A grouped summary table is shown (actual vs. target reps/weight, colour-coded). User clicks "Back to Home".
 
 ## Data Model
 
@@ -30,6 +31,7 @@ The "live workout" experience: the user executes a workout set-by-set, logs actu
 
 ## Frontend
 
+- **Chooser:** `frontend/src/components/WorkoutSessionsView.vue` — workout selection page reached from the home launcher
 - **Container:** `frontend/src/components/WorkoutSessionView.vue`
 - **Phase sub-components:**
   - `frontend/src/components/WorkoutSession/WarmupPhase.vue` — elapsed timer + "Go" button
@@ -37,7 +39,7 @@ The "live workout" experience: the user executes a workout set-by-set, logs actu
   - `frontend/src/components/WorkoutSession/LogRepsPhase.vue` — actual reps/weight input with +/− buttons
   - `frontend/src/components/WorkoutSession/RestPhase.vue` — countdown timer, "Skip", next-exercise preview
   - `frontend/src/components/WorkoutSession/CompletePhase.vue` — grouped results table
-- **Route:** `/workout/:id`
+- **Routes:** `/workouts/start` for workout selection and `/workout/:id` for the live session
 - **Store (Pinia):** `useWorkoutStore` in `frontend/src/stores/workout.js`
   - **Key state:** `workout`, `phase` (WARMUP | EXERCISE | LOG_REPS | REST | COMPLETE), `currentStepIndex`, `results[]`, `warmupElapsed`, `restRemaining`
   - **Key computed:** `allSteps` (flattened 1-D array of sets), `currentStep`, `isLastStep`, `isActive`, `groupedResults`

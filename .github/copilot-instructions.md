@@ -2,7 +2,7 @@
 
 Summary
 -------
-This repository implements Benergy — a home training web app. Backend is a Django REST API (located in `api/`). Frontend is a Vue.js app built with Vite (located in `frontend/`). The app supports user auth, a user profile (personal/fitness data), per-user workout editing, workout session logging/history, a "live workout" feature, AI-generated warm-up suggestions (LLM via GitHub Models / Ollama), and a workout Insights section (volume-over-time charts). The stack is containerised and commonly run via Docker Compose.
+This repository implements Benergy — a home training web app. Backend is a Django REST API (located in `api/`). Frontend is a Vue.js app built with Vite (located in `frontend/`). The app supports user auth, a user profile (personal/fitness data), per-user workout editing, workout session logging/history, a "live workout" feature, dedicated workout management and logs/insights hub pages, AI-generated warm-up suggestions (LLM via GitHub Models / Ollama), and a workout Insights section (volume-over-time charts). The stack is containerised and commonly run via Docker Compose.
 
 Intended audience for this app, and context for these notes
 ----------
@@ -74,6 +74,7 @@ Useful files & commands
 - Developer task runner: `Taskfile.yml` — use `task --list` to see everything. This is the single source of commands for dev, build, test, and deploy.
 - Backend entry: `api/manage.py` and `api/Dockerfile` / `api/Dockerfile.prod`.
 - Frontend: `frontend/package.json`, `frontend/Dockerfile(.prod)`, and `frontend/e2e/` for Playwright.
+- Frontend routing: `frontend/src/router/index.js` for `/workouts/start`, `/workouts/manage`, and `/workouts/logs-and-insights`.
 - Exercise catalog search: `frontend/src/services/workout.js` exports `searchExerciseDefinitions(query)` calling `GET /api/exercise-definitions/?q=`.
 - To build production images and push: use the `build:*` tasks in `Taskfile.yml` which set the right platforms and tags.
 - LLM configuration: set `LLM_API_KEY`, `LLM_API_BASE`, `LLM_MODEL` in `.env.dev` / `.env.prod`. For GitHub Models use a GitHub PAT with `Models:Read` scope. For local Ollama set `LLM_API_BASE=http://host.docker.internal:11434/v1` and `LLM_API_KEY=ollama`.

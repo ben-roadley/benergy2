@@ -1,7 +1,7 @@
 <template>
   <div class="insights-page">
     <div class="insights-header">
-      <Button icon="pi pi-arrow-left" text @click="router.push('/')" />
+      <Button icon="pi pi-arrow-left" text @click="router.push('/workouts/logs-and-insights')" />
       <h1 class="insights-title">
         {{ insights ? `${insights.workout_name} — Insights` : 'Insights' }}
       </h1>

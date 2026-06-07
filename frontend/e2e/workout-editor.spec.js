@@ -39,7 +39,6 @@ test.describe('Workout Editor', () => {
     await page.getByRole('button', { name: 'Create Workout' }).click()
 
     await expect(page).toHaveURL('/')
-    await expect(page.getByRole('button', { name })).toBeVisible()
   })
 
   // ---- Validation ----
@@ -77,9 +76,10 @@ test.describe('Workout Editor', () => {
     await page.getByRole('button', { name: 'Create Workout' }).click()
     await expect(page).toHaveURL('/')
 
-    // Click the pencil icon next to the workout (second button in the row)
+    // Go to management page and open the workout for editing
+    await page.goto('/workouts/manage')
     const row = page.locator('.workout-item-row').filter({ hasText: name })
-    await row.getByRole('button').nth(1).click()
+    await row.getByRole('button', { name }).click()
 
     await expect(page).toHaveURL(/\/workouts\/\d+\/edit/)
     await expect(page.getByRole('heading', { name: 'Edit Workout' })).toBeVisible()
@@ -98,10 +98,11 @@ test.describe('Workout Editor', () => {
     await selectExercise(page, 'Barbell Lunge')
     await page.getByRole('button', { name: 'Create Workout' }).click()
     await expect(page).toHaveURL('/')
+    await page.goto('/workouts/manage')
 
     // Open for editing
     const row = page.locator('.workout-item-row').filter({ hasText: originalName })
-    await row.getByRole('button').nth(1).click()
+    await row.getByRole('button', { name: originalName }).click()
     await expect(page).toHaveURL(/\/workouts\/\d+\/edit/)
 
     // Change the name
@@ -110,6 +111,7 @@ test.describe('Workout Editor', () => {
     await page.getByRole('button', { name: 'Save Changes' }).click()
 
     await expect(page).toHaveURL('/')
+    await page.goto('/workouts/manage')
     await expect(page.getByRole('button', { name: updatedName })).toBeVisible()
   })
 })
