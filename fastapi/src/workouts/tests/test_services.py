@@ -1,4 +1,5 @@
-from src.workouts.models import AuthUser, WorkoutWorkout as Workout
+from src.workouts.models import WorkoutWorkout as Workout
+from src.users.models import AuthUser
 from src.workouts.services import get_workouts
 
 
