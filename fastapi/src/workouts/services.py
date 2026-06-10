@@ -13,9 +13,7 @@ from src.workouts.models import WorkoutSetofreps as SetOfReps
 from src.workouts.models import WorkoutExercise as Exercise
 
 
-def get_workouts(session: Session = Depends(get_session), user_id: int = None):
-    if user_id is None:
-        raise ValueError("user_id must be provided")
+def get_workouts(user_id: int, session: Session) -> list[Workout]:
     statement = select(Workout).where(Workout.user_id == user_id)
     results = session.exec(statement).all()
     return results
