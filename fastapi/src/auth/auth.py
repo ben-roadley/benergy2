@@ -5,10 +5,12 @@ from typing import Annotated
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from pwdlib import PasswordHash
 from pydantic import BaseModel
+from sqlmodel import Session
 
-from src.users.users import fake_users_db, User, UserInDB, get_user
+from pwdlib import PasswordHash
+
+from src.users.users import User, get_user
 
 SECRET_KEY = os.getenv("FASTAPI_SECRET_KEY")
 ALGORITHM = os.getenv("FASTAPI_ALGORITHM", "HS256")
@@ -50,18 +52,18 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-def authenticate_user(username: str, password: str):
+def authenticate_user(username: str, password: str, session: Session):
     # When authenticate_user is called with a username that doesn't exist in the database, 
     # we still run verify_password against a dummy hash.
 
     # This ensures the endpoint takes roughly the same amount of time to respond
     # whether the username is valid or not, preventing timing attacks that
     # could be used to enumerate existing usernames.
-    user = get_user(username)
+    user = get_user(username, session)
     if not user:
         verify_password(password, DUMMY_HASH)
         return False
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user.password):
         return False
     return user
 

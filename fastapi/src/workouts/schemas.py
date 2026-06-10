@@ -1,11 +1,7 @@
 from pydantic import BaseModel, ConfigDict, computed_field
 from src.workouts.services import is_workout_stagnating
+from src.users.schemas import UserSchema
 
-class UserSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    username: str
-    email: str | None = None
 
 class WorkoutBaseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
