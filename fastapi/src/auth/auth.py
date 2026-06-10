@@ -34,6 +34,10 @@ DUMMY_HASH = password_hash.hash("dummypassword")
 
 
 def verify_password(plain_password, hashed_password):
+    #TODO Remove after confirming that all existing hashes in the database have the "argon2" prefix removed.
+    # Django adds the string "argon2" to the beginning of the hash, so we need to remove it before verifying.
+    if hashed_password.startswith("argon2"):
+        hashed_password = hashed_password[len("argon2") :]
     return password_hash.verify(plain_password, hashed_password)
 
 
