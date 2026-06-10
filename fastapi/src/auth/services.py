@@ -5,26 +5,17 @@ from typing import Annotated
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel
 from sqlmodel import Session
 
 from pwdlib import PasswordHash
 
 from src.database import get_session
-from src.users.users import User, get_user
+from src.users.services import User, get_user
+from src.auth.schemas import TokenData
 
 SECRET_KEY = os.getenv("FASTAPI_SECRET_KEY")
 ALGORITHM = os.getenv("FASTAPI_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("FASTAPI_ACCESS_TOKEN_EXPIRE_MINUTES", 30))
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
