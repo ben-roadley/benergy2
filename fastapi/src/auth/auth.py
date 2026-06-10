@@ -10,6 +10,7 @@ from sqlmodel import Session
 
 from pwdlib import PasswordHash
 
+from src.database import get_session
 from src.users.users import User, get_user
 
 SECRET_KEY = os.getenv("FASTAPI_SECRET_KEY")
@@ -72,7 +73,7 @@ def authenticate_user(username: str, password: str, session: Session):
     return user
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -86,7 +87,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except jwt.InvalidTokenError:
         raise credentials_exception
-    user = get_user(username=token_data.username)
+    user = get_user(username=token_data.username, session=session)
     if user is None:
         raise credentials_exception
     return user
