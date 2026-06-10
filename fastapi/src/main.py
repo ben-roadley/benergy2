@@ -40,7 +40,7 @@ async def login_for_access_token(
 # User endpoints
 
 @app.get("/users/me/")
-async def read_users_me(
+async def fetch_users_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ) -> User:
     return current_user
@@ -49,11 +49,13 @@ async def read_users_me(
 # Workout endpoints
 
 @app.get("/")
-def read_root():
+def fetch_root():
     return {"Hello": "World"}
 
 
 @app.get("/workouts/", response_model=list[WorkoutBaseSchema])
-def read_items(session: Session = Depends(get_session)):
-    user_id = 2
-    return get_workouts(session, user_id)
+def fetch_workouts(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: Session = Depends(get_session)
+):
+    return get_workouts(user_id=current_user.id, session=session)
