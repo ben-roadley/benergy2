@@ -9,8 +9,8 @@ from sqlmodel import Session
 from src.database import get_session
 from src.workouts.schemas import WorkoutBaseSchema
 from src.workouts.services import get_workouts
-
-from src.auth.auth import Token, User, authenticate_user, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
+from src.users.schemas import UserSchema as User
+from src.auth.auth import Token, authenticate_user, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 app = FastAPI()
