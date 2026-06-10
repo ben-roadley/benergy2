@@ -1,9 +1,8 @@
 from typing import Optional, Tuple
 
-from fastapi import Depends
 from sqlmodel import Session, select
 
-from src.database import get_session, engine
+from src.database import engine
 
 # from src.workouts.models import t_workout_workout as Workout
 from src.workouts.models import WorkoutWorkout as Workout

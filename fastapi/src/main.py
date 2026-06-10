@@ -1,7 +1,6 @@
 from datetime import timedelta
 from typing import Annotated
 
-import jwt
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
@@ -10,7 +9,8 @@ from src.database import get_session
 from src.workouts.schemas import WorkoutBaseSchema
 from src.workouts.services import get_workouts
 from src.users.schemas import UserSchema as User
-from src.auth.auth import Token, authenticate_user, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
+from src.auth.schemas import Token
+from src.auth.services import authenticate_user, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 app = FastAPI()
@@ -47,11 +47,6 @@ async def fetch_users_me(
 
 
 # Workout endpoints
-
-@app.get("/")
-def fetch_root():
-    return {"Hello": "World"}
-
 
 @app.get("/workouts/", response_model=list[WorkoutBaseSchema])
 def fetch_workouts(

@@ -6,7 +6,7 @@ from sqlalchemy import BigInteger, Boolean, CheckConstraint, Column, Date, DateT
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
-from src.workouts.models import WorkoutWorkout , WorkoutWorkoutlog
+from src.workouts.models import WorkoutWorkout, WorkoutWorkoutlog
 
 
 
