@@ -4,7 +4,8 @@ from sqlmodel import SQLModel, Session
 from fastapi.testclient import TestClient
 
 from src.main import app
-from src.database import get_session, SQL_DATABASE_URL
+from src.database import SQL_DATABASE_URL
+from src.dependencies import get_session
 from src.workouts import models  # Ensure models are imported to register with SQLModel.metadata
 
 
