@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, computed_field
-from src.workouts.services import is_workout_stagnating
-from src.users.schemas import UserSchema
+from .services import is_workout_stagnating
+from ..users.schemas import UserSchema
 
 
 class WorkoutBaseSchema(BaseModel):

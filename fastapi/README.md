@@ -16,3 +16,5 @@ src/
 tests/   
 
 
+Testing:
+open a shell in container: "pytest"

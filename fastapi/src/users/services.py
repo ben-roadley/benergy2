@@ -1,7 +1,7 @@
 from sqlmodel import Session, select
 
-from src.users.schemas import UserInDBSchema as UserInDB
-from src.users.models import AuthUser as User
+from .schemas import UserInDBSchema as UserInDB
+from .models import AuthUser as User
 
 
 def get_user(username: str, session: Session):
