@@ -4,7 +4,6 @@ from sqlmodel import Session, select
 
 from src.database import engine
 
-# from src.workouts.models import t_workout_workout as Workout
 from src.workouts.models import WorkoutWorkout as Workout
 from src.workouts.models import WorkoutWorkoutlog as WorkoutLog
 from src.workouts.models import WorkoutWorkoutlogentry as WorkoutLogEntry

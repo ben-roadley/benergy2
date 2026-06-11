@@ -1,9 +1,9 @@
-from src.workouts.models import WorkoutWorkout as Workout
 from src.users.models import AuthUser
-from src.workouts.services import get_workouts
+from ..models import WorkoutWorkout as Workout
+from ..services import get_workouts
 
 
-def _create_user(session):
+def _create_user():
     return AuthUser(
         password="fakehashedpassword",
         is_superuser=False,
@@ -17,7 +17,7 @@ def _create_user(session):
     )
 
 def test_get_workouts(session):
-    w_user = _create_user(session)
+    w_user = _create_user()
 
     workout = Workout(name="Batman", user=w_user, updated_at="2026-01-01T00:00:00Z", description="The Dark Knight's workout")
     session.add(workout)
@@ -31,4 +31,4 @@ def test_get_workouts(session):
 
 
 def test_is_workout_stagnating__no_logs(session):
-    w_user = _create_user(session)
+    w_user = _create_user()

@@ -1,17 +1,18 @@
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-
 import jwt
+from pwdlib import PasswordHash
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
 
-from pwdlib import PasswordHash
+from ..database import get_session
+from ..users.services import User, get_user
 
-from src.database import get_session
-from src.users.services import User, get_user
-from src.auth.schemas import TokenData
+from .schemas import TokenData
+
 
 SECRET_KEY = os.getenv("FASTAPI_SECRET_KEY")
 ALGORITHM = os.getenv("FASTAPI_ALGORITHM", "HS256")
