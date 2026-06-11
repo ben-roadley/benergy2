@@ -5,7 +5,7 @@ from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
-from ..database import get_session
+from ..dependencies import get_session
 
 from .schemas import Token
 from .services import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES

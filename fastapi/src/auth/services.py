@@ -8,7 +8,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
 
-from ..database import get_session
+from ..dependencies import get_session
 from ..users.services import User, get_user
 
 from .schemas import TokenData
@@ -17,7 +17,6 @@ from .schemas import TokenData
 SECRET_KEY = os.getenv("FASTAPI_SECRET_KEY")
 ALGORITHM = os.getenv("FASTAPI_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("FASTAPI_ACCESS_TOKEN_EXPIRE_MINUTES", 30))
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -91,5 +90,3 @@ async def get_current_active_user(
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
-
-

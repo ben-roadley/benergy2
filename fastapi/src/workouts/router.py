@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from typing import Annotated
 from sqlmodel import Session
 
-from ..database import get_session
+from ..dependencies import get_session
 
 from ..auth.services import get_current_active_user
 from ..users.schemas import UserSchema as User
