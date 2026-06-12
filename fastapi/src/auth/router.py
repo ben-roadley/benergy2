@@ -2,14 +2,17 @@ from datetime import timedelta
 from typing import Annotated
 
 from fastapi import Depends, APIRouter, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import Session
 
 from ..dependencies import get_session
 
-from .schemas import Token
-from .services import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from ..users.schemas import UserSchema as User
 
+from .schemas import Token
+from .services import authenticate_user, check_token, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 router = APIRouter(tags=["auth"])
 
@@ -30,3 +33,7 @@ async def login_for_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
+
+@router.get("/session")
+async def check_session(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)) -> dict:
+    return await check_token(token, session)

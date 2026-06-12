@@ -9,7 +9,8 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
 
 from ..dependencies import get_session
-from ..users.services import User, get_user
+from ..users.services import get_user
+from ..users.schemas import UserSchema as User
 
 from .schemas import TokenData
 
@@ -90,3 +91,11 @@ async def get_current_active_user(
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+async def check_token(token, session) -> dict:
+    try:
+        user = await get_current_user(token, session)
+        return {"isAuthenticated": True, "user": User(**user.model_dump())}
+    except Exception as e:
+        return {"isAuthenticated": False}
