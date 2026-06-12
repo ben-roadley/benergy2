@@ -8,7 +8,7 @@ from ..auth.services import get_current_active_user
 from ..users.schemas import UserSchema as User
 
 from .schemas import WorkoutBaseSchema
-from .services import get_workouts
+from .services import get_workouts, last_workout_session
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
@@ -18,3 +18,13 @@ def fetch_workouts(
     session: Session = Depends(get_session)
 ):
     return get_workouts(user_id=current_user.id, session=session)
+
+
+
+@router.get("/last-session/")
+def fetch_last_workout_session(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: Session = Depends(get_session)
+):
+    """Endpoint to fetch the user's last workout session details."""
+    return last_workout_session(user_id=current_user.id, session=session)
