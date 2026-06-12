@@ -18,7 +18,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://web:8000',
+        // target: 'http://web:8000',
+        target: 'http://fastapi:8888',
         changeOrigin: true,
       },
     },
