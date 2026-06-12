@@ -17,6 +17,24 @@ def get_workouts(user_id: int, session: Session) -> list[Workout]:
     return results
 
 
+def last_workout_session(user_id: int, session: Session) -> Optional[dict]:
+    statement = (
+        select(WorkoutLog)
+        .where(WorkoutLog.user_id == user_id)
+        .order_by(WorkoutLog.completed_at.desc())
+    )
+    last_log = session.exec(statement).first()
+
+    if not last_log:
+        return None
+
+    return {
+        "workout_name": last_log.workout.name,
+        "completed_at": last_log.completed_at,
+    }
+
+
+
 def is_workout_stagnating(workout: Workout = None) -> bool:
     """Return True when the last three workout logs have identical entry patterns."""
     if workout is None:
