@@ -2,6 +2,7 @@ from typing import Optional, Tuple
 
 from sqlmodel import Session, select
 
+from src.workouts.schemas import WorkoutBaseSchema
 from src.database import engine
 
 from src.workouts.models import WorkoutWorkout as Workout
@@ -11,10 +12,18 @@ from src.workouts.models import WorkoutSetofreps as SetOfReps
 from src.workouts.models import WorkoutExercise as Exercise
 
 
-def get_workouts(user_id: int, session: Session) -> list[Workout]:
+def get_workouts(user_id: int, session: Session) -> list[WorkoutBaseSchema]:
     statement = select(Workout).where(Workout.user_id == user_id)
     results = session.exec(statement).all()
-    return results
+    return [WorkoutBaseSchema.from_orm(workout) for workout in results]
+
+
+
+def get_workout(user_id: int, workout_id: int, session: Session) -> Optional[Workout]:
+    statement = select(Workout).where(Workout.user_id == user_id, Workout.id == workout_id)
+    result = session.exec(statement).one_or_none()
+    return result
+
 
 
 def last_workout_session(user_id: int, session: Session) -> Optional[dict]:
@@ -32,6 +41,17 @@ def last_workout_session(user_id: int, session: Session) -> Optional[dict]:
         "workout_name": last_log.workout.name,
         "completed_at": last_log.completed_at,
     }
+
+
+def is_workout_editable(workout: Workout = None) -> bool:
+    """Return True when a workout has no training logs and can be edited."""
+    if workout is None:
+        raise ValueError("workout must be provided")
+    
+    with Session(engine) as session:
+        statement = select(WorkoutLog).where(WorkoutLog.workout_id == workout.id)
+        logs = session.exec(statement).all()
+        return len(logs) == 0
 
 
 

@@ -43,7 +43,7 @@ class WorkoutWorkout(SQLModel, table=True):
     description: str = Field(sa_column=Column('description', Text, nullable=False))
 
     user: 'AuthUser' = Relationship(back_populates='workout_workout')
-    workout_exercise: list['WorkoutExercise'] = Relationship(back_populates='workout')
+    exercises: list['WorkoutExercise'] = Relationship(back_populates='workout')
     workout_warmupsuggestion: 'WorkoutWarmupsuggestion' = Relationship(back_populates='workout', sa_relationship_kwargs={'uselist': False})
     workout_workoutlog: list['WorkoutWorkoutlog'] = Relationship(back_populates='workout')
 
@@ -67,8 +67,27 @@ class WorkoutExercise(SQLModel, table=True):
     rest_time_after: int = Field(sa_column=Column('rest_time_after', SmallInteger, nullable=False))
 
     exercise_definition: 'CatalogExercisedefinition' = Relationship(back_populates='workout_exercise')
-    workout: 'WorkoutWorkout' = Relationship(back_populates='workout_exercise')
-    workout_setofreps: list['WorkoutSetofreps'] = Relationship(back_populates='exercise')
+    workout: 'WorkoutWorkout' = Relationship(back_populates='exercises')
+    set_of_reps: list['WorkoutSetofreps'] = Relationship(back_populates='exercise')
+
+
+class WorkoutSetofreps(SQLModel, table=True):
+    __tablename__ = 'workout_setofreps'
+    __table_args__ = (
+        ForeignKeyConstraint(['exercise_id'], ['workout_exercise.id'], deferrable=True, initially='DEFERRED', name='workout_setofreps_exercise_id_3a05f215_fk_workout_exercise_id'),
+        PrimaryKeyConstraint('id', name='workout_setofreps_pkey'),
+        UniqueConstraint('exercise_id', 'order', name='unique_order_for_exercise'),
+        Index('workout_setofreps_exercise_id_3a05f215', 'exercise_id')
+    )
+
+    id: int = Field(sa_column=Column('id', BigInteger, Identity(start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True))
+    order: int = Field(sa_column=Column('order', SmallInteger, nullable=False))
+    nb_reps: int = Field(sa_column=Column('nb_reps', SmallInteger, nullable=False))
+    exercise_id: int = Field(sa_column=Column('exercise_id', BigInteger, nullable=False))
+    weight: Optional[decimal.Decimal] = Field(default=None, sa_column=Column('weight', Numeric(6, 2)))
+
+    exercise: 'WorkoutExercise' = Relationship(back_populates='set_of_reps')
+    workout_workoutlogentry: list['WorkoutWorkoutlogentry'] = Relationship(back_populates='set_of_reps')
 
 
 class WorkoutWarmupsuggestion(SQLModel, table=True):
@@ -106,25 +125,6 @@ class WorkoutWorkoutlog(SQLModel, table=True):
     user: 'AuthUser' = Relationship(back_populates='workout_workoutlog')
     workout: 'WorkoutWorkout' = Relationship(back_populates='workout_workoutlog')
     workout_workoutlogentry: list['WorkoutWorkoutlogentry'] = Relationship(back_populates='log')
-
-
-class WorkoutSetofreps(SQLModel, table=True):
-    __tablename__ = 'workout_setofreps'
-    __table_args__ = (
-        ForeignKeyConstraint(['exercise_id'], ['workout_exercise.id'], deferrable=True, initially='DEFERRED', name='workout_setofreps_exercise_id_3a05f215_fk_workout_exercise_id'),
-        PrimaryKeyConstraint('id', name='workout_setofreps_pkey'),
-        UniqueConstraint('exercise_id', 'order', name='unique_order_for_exercise'),
-        Index('workout_setofreps_exercise_id_3a05f215', 'exercise_id')
-    )
-
-    id: int = Field(sa_column=Column('id', BigInteger, Identity(start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True))
-    order: int = Field(sa_column=Column('order', SmallInteger, nullable=False))
-    nb_reps: int = Field(sa_column=Column('nb_reps', SmallInteger, nullable=False))
-    exercise_id: int = Field(sa_column=Column('exercise_id', BigInteger, nullable=False))
-    weight: Optional[decimal.Decimal] = Field(default=None, sa_column=Column('weight', Numeric(6, 2)))
-
-    exercise: 'WorkoutExercise' = Relationship(back_populates='workout_setofreps')
-    workout_workoutlogentry: list['WorkoutWorkoutlogentry'] = Relationship(back_populates='set_of_reps')
 
 
 class WorkoutWorkoutlogentry(SQLModel, table=True):

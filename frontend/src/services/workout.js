@@ -1,17 +1,17 @@
 import api from './api'
 
 export async function fetchWorkouts() {
-  const { data } = await api.get('/api/workouts/')
+  const { data } = await api.get('/workouts/')
   return data
 }
 
 export async function fetchLastWorkoutSession() {
-  const { data } = await api.get('/api/workouts/last-session/')
+  const { data } = await api.get('/workouts/last-session/')
   return data
 }
 
 export async function fetchWorkout(id) {
-  const { data } = await api.get(`/api/workouts/${id}/`)
+  const { data } = await api.get(`/workouts/${id}/`)
   return data
 }
 
@@ -56,6 +56,6 @@ export async function fetchWorkoutVolumeInsights(id) {
 }
 
 export async function searchExerciseDefinitions(query) {
-  const { data } = await api.get('/api/exercise-definitions/', { params: { q: query } })
+  const { data } = await api.get('/exercise-definitions/', { params: { q: query } })
   return data
 }
