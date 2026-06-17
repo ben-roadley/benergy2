@@ -15,7 +15,7 @@ from src.workouts.models import WorkoutExercise as Exercise
 def get_workouts(user_id: int, session: Session) -> list[WorkoutBaseSchema]:
     statement = select(Workout).where(Workout.user_id == user_id)
     results = session.exec(statement).all()
-    return [WorkoutBaseSchema.from_orm(workout) for workout in results]
+    return [WorkoutBaseSchema.model_validate(workout) for workout in results]
 
 
 
