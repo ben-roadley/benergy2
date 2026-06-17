@@ -1,12 +1,7 @@
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, computed_field
 
+from ..catalog.schemas import CatalogExercisedefinitionBaseSchema
 from ..users.schemas import UserSchema
-
-
-class CatalogExercisedefinitionBaseSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    slug: str
-    name: str
 
 
 class SetOfRepsBaseSchema(BaseModel):
@@ -29,8 +24,6 @@ class ExerciseBaseSchema(BaseModel):
     @computed_field
     @property
     def exercise_name(self) -> str:
-        print("ExerciseBaseSchema: exercise_name property accessed")
-        print(f"ExerciseBaseSchema: self.exercise_definition = {self.exercise_definition}")
         return self.exercise_definition.name
 
 

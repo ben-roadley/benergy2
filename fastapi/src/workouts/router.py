@@ -33,7 +33,7 @@ def fetch_last_workout_session(
     return result
 
 
-#TODO => nested data
+
 @router.get("/{workout_id}/", response_model=WorkoutWithExercisesBaseSchema)
 def fetch_workout(
     workout_id: int,
