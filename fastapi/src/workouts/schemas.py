@@ -1,3 +1,5 @@
+import datetime
+
 from pydantic import BaseModel, ConfigDict, computed_field
 
 from ..catalog.schemas import CatalogExercisedefinitionBaseSchema
@@ -47,7 +49,26 @@ class WorkoutBaseSchema(BaseModel):
         return is_workout_editable(workout=self)
 
 
-
 class WorkoutWithExercisesBaseSchema(WorkoutBaseSchema):
     exercises: list[ExerciseBaseSchema]
+
+
+class WorkoutLogBaseSchema(BaseModel):  #TODO: do not link to table, just return the data we need
+    id: int
+    workout_name: str
+    completed_at: datetime.datetime
+    exercises: list["WorkoutLogEntryBaseSchema"] | None = None  # Optional, can be populated with entries if needed
+
+
+class WorkoutLogEntryBaseSchema(BaseModel):
+    exercise_name: str
+    exercise_order: int
+    sets: list["WorkoutLogEntrySetBaseSchema"]
     
+    
+class WorkoutLogEntrySetBaseSchema(BaseModel):
+    set_order: int
+    nb_reps_actual: int
+    nb_reps_target: int
+    weight_actual: float | None = None
+    weight_target: float | None = None

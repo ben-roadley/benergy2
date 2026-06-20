@@ -46,7 +46,7 @@ export async function refreshWarmupSuggestions(id) {
 }
 
 export async function fetchWorkoutLogs(id) {
-  const { data } = await api.get(`/api/workouts/${id}/logs/`)
+  const { data } = await api.get(`/workouts/${id}/logs/`)
   return data
 }
 
