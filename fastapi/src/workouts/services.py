@@ -2,14 +2,17 @@ from typing import Optional, Tuple
 
 from sqlmodel import Session, select
 
-from src.workouts.schemas import WorkoutBaseSchema
-from src.database import engine
+from ..catalog.models import CatalogExercisedefinition as ExerciseDefinition
 
-from src.workouts.models import WorkoutWorkout as Workout
-from src.workouts.models import WorkoutWorkoutlog as WorkoutLog
-from src.workouts.models import WorkoutWorkoutlogentry as WorkoutLogEntry
-from src.workouts.models import WorkoutSetofreps as SetOfReps
-from src.workouts.models import WorkoutExercise as Exercise
+from .schemas import WorkoutBaseSchema, WorkoutLogBaseSchema, WorkoutLogEntryBaseSchema, WorkoutLogEntrySetBaseSchema
+from ..database import engine
+
+from .models import WorkoutWorkout as Workout
+from .models import WorkoutWorkoutlog as WorkoutLog
+from .models import WorkoutWorkoutlogentry as WorkoutLogEntry
+from .models import WorkoutSetofreps as SetOfReps
+from .models import WorkoutExercise as Exercise
+from .models import WorkoutWorkoutlog as WorkoutLog
 
 
 def get_workouts(user_id: int, session: Session) -> list[WorkoutBaseSchema]:
@@ -41,6 +44,95 @@ def last_workout_session(user_id: int, session: Session) -> Optional[dict]:
         "workout_name": last_log.workout.name,
         "completed_at": last_log.completed_at,
     }
+
+
+def get_workout_logs(user_id: int, workout_id: int, session: Session) -> Optional[list[WorkoutLogBaseSchema]]:
+    statement = (
+        select(
+            WorkoutLog.id,
+            WorkoutLog.completed_at,
+            Workout.name.label("workout_name")
+        )
+        .join(Workout)
+        .where(WorkoutLog.user_id == user_id, WorkoutLog.workout_id == workout_id)
+        .order_by(WorkoutLog.completed_at.desc())
+    )
+    workout_logs = session.exec(statement).all()
+
+    formatted_workout_logs = []
+    for workout_log in workout_logs:
+        log_entry_statement = (
+            select(
+                WorkoutLogEntry,
+                SetOfReps,
+                Exercise,
+                ExerciseDefinition.name.label("exercise_name")
+            )
+            .join(SetOfReps, WorkoutLogEntry.set_of_reps)
+            .join(Exercise, SetOfReps.exercise)
+            .join(ExerciseDefinition, Exercise.exercise_definition)
+            .where(WorkoutLogEntry.log_id == workout_log.id)
+            .order_by(Exercise.order, SetOfReps.order)
+        )
+        log_entries = session.exec(log_entry_statement).all()
+
+        log_exercises = []
+        for entry in group_log_entries_by_exercise(log_entries):
+            entry_sets = []
+            for set in entry["sets"]:
+                entry_sets.append(
+                    WorkoutLogEntrySetBaseSchema(
+                        set_order=set["set_order"],
+                        nb_reps_actual=set["nb_reps_actual"],
+                        nb_reps_target=set["nb_reps_target"],
+                        weight_actual=set["weight_actual"],
+                        weight_target=set["weight_target"]
+                    )
+                )
+
+            log_exercises.append(
+                WorkoutLogEntryBaseSchema(
+                    exercise_name=entry["exercise_name"],
+                    exercise_order=entry["exercise_order"],
+                    sets=entry_sets
+                )
+            )
+
+        formatted_workout_logs.append(
+            WorkoutLogBaseSchema(
+                id=workout_log.id,
+                workout_name=workout_log.workout_name,
+                completed_at=workout_log.completed_at,
+                exercises=log_exercises
+            )
+        )
+
+    return formatted_workout_logs
+
+
+def group_log_entries_by_exercise(entries):
+    """Group log entries by exercise, ordered by exercise_order."""
+    grouped = {}
+    
+    for e in entries:
+        log_entry, set_of_reps, exercise, exercise_name = e
+        key = exercise.order
+        if key not in grouped:
+            grouped[key] = {
+                "exercise_name": exercise_name,
+                "exercise_order": exercise.order,
+                "sets": [],
+            }
+        grouped[key]["sets"].append(
+            {
+                "set_order": set_of_reps.order,
+                "nb_reps_actual": log_entry.nb_reps_actual,
+                "nb_reps_target": log_entry.nb_reps_target,
+                "weight_actual": log_entry.weight_actual,
+                "weight_target": log_entry.weight_target,
+            }
+        )
+    return list(grouped.values())
 
 
 def is_workout_editable(workout: Workout = None) -> bool:
