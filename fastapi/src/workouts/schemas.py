@@ -16,12 +16,12 @@ class SetOfRepsListItem(BaseModel):
 
 class ExerciseListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    id: int
-    order: int
-    rest_time_after: int
-    set_of_reps: list["SetOfRepsListItem"]
+    id: int | None = None
+    order: int | None = None
+    rest_time_after: int | None = None
+    set_of_reps: list["SetOfRepsListItem"] | None = None
 
-    exercise_definition: "CatalogExerciseDefinitionListItem"
+    exercise_definition: CatalogExerciseDefinitionListItem
 
     @computed_field
     @property
@@ -34,7 +34,7 @@ class WorkoutListItem(BaseModel):
     id: int
     name: str
     description: str | None = None
-    user: "User"
+    user: User
 
     @computed_field
     @property
@@ -78,3 +78,11 @@ class WorkoutLogEntrySetListItem(BaseModel):
     nb_reps_target: int
     weight_actual: float | None = None
     weight_target: float | None = None
+
+
+class WorkoutVolumeInsightsDetails(BaseModel):
+    workout_name: str
+    bodyweight_kg: float | None = None
+    sessions: list[str]
+    total_volume: list[float]
+    exercises: list[dict]  # Each dict contains exercise_name and volumes list
