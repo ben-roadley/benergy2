@@ -12,6 +12,7 @@ from .services import get_workouts, get_workout, last_workout_session, get_worko
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
+
 @router.get("/", response_model=list[WorkoutBaseSchema])
 def fetch_workouts(
     current_user: Annotated[User, Depends(get_current_active_user)],
@@ -44,7 +45,6 @@ def fetch_workout_logs(
     if not w:
         raise HTTPException(status_code=404, detail="Workout not found.")
     return w
-
 
 
 

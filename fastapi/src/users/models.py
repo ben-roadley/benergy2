@@ -6,8 +6,9 @@ from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, ForeignKeyCo
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel
 
-from ..workouts.models import WorkoutWorkout, WorkoutWorkoutlog
+from .schemas import SexChoices, FitnessLevelChoices, SessionDurationChoices, SleepQualityChoices, StressLevelChoices
 
+from ..workouts.models import WorkoutWorkout, WorkoutWorkoutlog
 
 
 class AuthUser(SQLModel, table=True):
@@ -46,16 +47,16 @@ class UsersUserprofile(SQLModel, table=True):
     )
 
     id: int = Field(sa_column=Column('id', BigInteger, Identity(start=1, increment=1, minvalue=1, maxvalue=9223372036854775807, cycle=False, cache=1), primary_key=True))
-    display_name: str = Field(sa_column=Column('display_name', String(100), nullable=False))
-    sex: str = Field(sa_column=Column('sex', String(20), nullable=False))
-    fitness_level: str = Field(sa_column=Column('fitness_level', String(20), nullable=False))
+    display_name: str = Field(sa_column=Column('display_name', String(100), nullable=False), default="")
+    sex: SexChoices = Field(sa_column=Column('sex', String(20), nullable=False))
+    fitness_level: FitnessLevelChoices = Field(sa_column=Column('fitness_level', String(20), nullable=False))
     goals: dict = Field(sa_column=Column('goals', JSONB, nullable=False))
     equipment: dict = Field(sa_column=Column('equipment', JSONB, nullable=False))
-    session_duration: str = Field(sa_column=Column('session_duration', String(10), nullable=False))
+    session_duration: SessionDurationChoices = Field(sa_column=Column('session_duration', String(10), nullable=False))
     injury_history: str = Field(sa_column=Column('injury_history', Text, nullable=False))
     lifestyle_description: str = Field(sa_column=Column('lifestyle_description', Text, nullable=False))
-    sleep_quality: str = Field(sa_column=Column('sleep_quality', String(10), nullable=False))
-    stress_level: str = Field(sa_column=Column('stress_level', String(10), nullable=False))
+    sleep_quality: SleepQualityChoices = Field(sa_column=Column('sleep_quality', String(10), nullable=False))
+    stress_level: StressLevelChoices = Field(sa_column=Column('stress_level', String(10), nullable=False))
     user_id: int = Field(sa_column=Column('user_id', Integer, nullable=False))
     date_of_birth: Optional[datetime.date] = Field(default=None, sa_column=Column('date_of_birth', Date))
     weight_kg: Optional[decimal.Decimal] = Field(default=None, sa_column=Column('weight_kg', Numeric(5, 1)))

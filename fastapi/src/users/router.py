@@ -1,12 +1,34 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
 
-from src.users.schemas import UserSchema as User
-from src.auth.services import get_current_active_user
+from sqlmodel import Session
 
-router = APIRouter(prefix="/users", tags=["users"])
+from ..dependencies import get_session
+from .schemas import UserSchema as User, ProfileDetails, ProfileOptionsDetails
+from .services import get_or_create_profile, get_profile_options
+from ..auth.services import get_current_active_user
 
-@router.get("/me")
+user_router = APIRouter(prefix="/users", tags=["users"])
+profile_router = APIRouter(prefix="/profile", tags=["profile"])
+
+@profile_router.get("/options", response_model=ProfileOptionsDetails)
+def fetch_profile_options():
+    return get_profile_options()
+
+
+
+@profile_router.get("/", response_model=ProfileDetails)
+def fetch_profile_details(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: Session = Depends(get_session)
+):
+    profile, created = get_or_create_profile(user_id=current_user.id, session=session)
+    return profile
+
+
+
+
+@user_router.get("/me")
 async def fetch_users_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ) -> User:

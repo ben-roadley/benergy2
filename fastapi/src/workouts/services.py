@@ -15,6 +15,7 @@ from .models import WorkoutExercise as Exercise
 from .models import WorkoutWorkoutlog as WorkoutLog
 
 
+
 def get_workouts(user_id: int, session: Session) -> list[WorkoutBaseSchema]:
     statement = select(Workout).where(Workout.user_id == user_id)
     results = session.exec(statement).all()
