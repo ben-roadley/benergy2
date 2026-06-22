@@ -3,7 +3,7 @@ import datetime
 from pydantic import BaseModel, ConfigDict, computed_field
 
 from ..catalog.schemas import CatalogExercisedefinitionBaseSchema
-from ..users.schemas import UserSchema
+from ..users.schemas import User
 
 
 class SetOfRepsBaseSchema(BaseModel):
@@ -34,7 +34,7 @@ class WorkoutBaseSchema(BaseModel):
     id: int
     name: str
     description: str | None = None
-    user: "UserSchema"
+    user: "User"
 
     @computed_field
     @property

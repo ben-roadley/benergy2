@@ -5,7 +5,7 @@ from sqlmodel import Session
 from ..dependencies import get_session
 
 from ..auth.services import get_current_active_user
-from ..users.schemas import UserSchema as User
+from ..users.schemas import User
 
 from .schemas import (
     WorkoutBaseSchema,

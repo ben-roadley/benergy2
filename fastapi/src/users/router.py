@@ -5,7 +5,7 @@ from sqlmodel import Session
 
 from ..dependencies import get_session
 from .schemas import (
-    UserSchema as User,
+    User,
     ProfileDetails,
     ProfileOptionsDetails,
     ProfileUpdate,
@@ -54,8 +54,8 @@ def patch_profile_details(
     return update_profile(user_id=current_user.id, session=session, profile=profile)
 
 
-@user_router.get("/me")
+@user_router.get("/me", response_model=User)
 async def fetch_users_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
-) -> User:
+):
     return current_user

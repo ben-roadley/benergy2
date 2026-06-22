@@ -62,15 +62,15 @@ class ValidEquipment(str, Enum):
     OTHER = "other"
 
 
-class UserSchema(BaseModel):
+class User(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     username: str
-    email: str | None = None
-    is_active: bool | None = None
+    email: str
+    is_active: bool
 
 
-class UserInDBSchema(UserSchema):
+class UserWithPassword(User):
     password: str
 
 
