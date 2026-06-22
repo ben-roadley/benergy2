@@ -2,11 +2,13 @@ from enum import Enum
 from pydantic import BaseModel, ConfigDict
 from typing import List
 
+
 class SexChoices(str, Enum):
     DEFAULT = ""
     MALE = "male"
     FEMALE = "female"
     PREFER_NOT_TO_SAY = "prefer_not_to_say"
+
 
 class FitnessLevelChoices(str, Enum):
     DEFAULT = ""
@@ -15,6 +17,7 @@ class FitnessLevelChoices(str, Enum):
     ADVANCED = "advanced"
     ATHLETE = "athlete"
 
+
 class SessionDurationChoices(str, Enum):
     DEFAULT = ""
     SHORT = "20_30"
@@ -22,11 +25,13 @@ class SessionDurationChoices(str, Enum):
     LONG = "45_60"
     VERY_LONG = "60_plus"
 
+
 class SleepQualityChoices(str, Enum):
     DEFAULT = ""
     POOR = "poor"
     AVERAGE = "average"
     GOOD = "good"
+
 
 class StressLevelChoices(str, Enum):
     DEFAULT = ""
@@ -45,6 +50,7 @@ class ValidGoals(str, Enum):
     FLEXIBILITY_MOBILITY = "flexibility_mobility"
     OTHER = "other"
 
+
 class ValidEquipment(str, Enum):
     RESISTANCE_BANDS = "resistance_bands"
     DUMBBELLS = "dumbbells"
@@ -53,8 +59,6 @@ class ValidEquipment(str, Enum):
     KETTLEBELL = "kettlebell"
     BODYWEIGHT_ONLY = "bodyweight_only"
     OTHER = "other"
-
-
 
 
 class UserSchema(BaseModel):

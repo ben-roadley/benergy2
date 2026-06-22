@@ -8,7 +8,6 @@ from .catalog.router import router as catalog_router
 from .users.router import user_router, profile_router
 from .workouts.router import router as workouts_router
 
-
 app = FastAPI()
 
 app.add_middleware(
