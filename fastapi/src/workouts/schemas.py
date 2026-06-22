@@ -2,11 +2,11 @@ import datetime
 
 from pydantic import BaseModel, ConfigDict, computed_field
 
-from ..catalog.schemas import CatalogExerciseDefinitionRead
+from ..catalog.schemas import CatalogExerciseDefinitionListItem
 from ..users.schemas import User
 
 
-class SetOfRepsBaseSchema(BaseModel):
+class SetOfRepsListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     order: int
@@ -14,14 +14,14 @@ class SetOfRepsBaseSchema(BaseModel):
     weight: float | None = None
 
 
-class ExerciseBaseSchema(BaseModel):
+class ExerciseListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     order: int
     rest_time_after: int
-    set_of_reps: list["SetOfRepsBaseSchema"]
+    set_of_reps: list["SetOfRepsListItem"]
 
-    exercise_definition: "CatalogExerciseDefinitionRead"
+    exercise_definition: "CatalogExerciseDefinitionListItem"
 
     @computed_field
     @property
@@ -29,7 +29,7 @@ class ExerciseBaseSchema(BaseModel):
         return self.exercise_definition.name
 
 
-class WorkoutBaseSchema(BaseModel):
+class WorkoutListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str
@@ -51,28 +51,28 @@ class WorkoutBaseSchema(BaseModel):
         return is_workout_editable(workout=self)
 
 
-class WorkoutWithExercisesBaseSchema(WorkoutBaseSchema):
-    exercises: list[ExerciseBaseSchema]
+class WorkoutWithExercisesDetails(WorkoutListItem):
+    exercises: list[ExerciseListItem]
 
 
-class WorkoutLogBaseSchema(
+class WorkoutLogListItem(
     BaseModel
 ):  # TODO: do not link to table, just return the data we need
     id: int
     workout_name: str
     completed_at: datetime.datetime
-    exercises: list["WorkoutLogEntryBaseSchema"] | None = (
+    exercises: list["WorkoutLogEntryListItem"] | None = (
         None  # Optional, can be populated with entries if needed
     )
 
 
-class WorkoutLogEntryBaseSchema(BaseModel):
+class WorkoutLogEntryListItem(BaseModel):
     exercise_name: str
     exercise_order: int
-    sets: list["WorkoutLogEntrySetBaseSchema"]
+    sets: list["WorkoutLogEntrySetListItem"]
 
 
-class WorkoutLogEntrySetBaseSchema(BaseModel):
+class WorkoutLogEntrySetListItem(BaseModel):
     set_order: int
     nb_reps_actual: int
     nb_reps_target: int

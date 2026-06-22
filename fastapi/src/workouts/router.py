@@ -8,16 +8,16 @@ from ..auth.services import get_current_active_user
 from ..users.schemas import User
 
 from .schemas import (
-    WorkoutBaseSchema,
-    WorkoutWithExercisesBaseSchema,
-    WorkoutLogBaseSchema,
+    ExerciseListItem,
+    WorkoutWithExercisesDetails,
+    WorkoutLogListItem,
 )
 from .services import get_workouts, get_workout, last_workout_session, get_workout_logs
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
 
-@router.get("/", response_model=list[WorkoutBaseSchema])
+@router.get("/", response_model=list[ExerciseListItem])
 def fetch_workouts(
     current_user: Annotated[User, Depends(get_current_active_user)],
     session: Session = Depends(get_session),
@@ -37,7 +37,7 @@ def fetch_last_workout_session(
     return result
 
 
-@router.get("/{workout_id}/logs", response_model=list[WorkoutLogBaseSchema])
+@router.get("/{workout_id}/logs", response_model=list[WorkoutLogListItem])
 def fetch_workout_logs(
     workout_id: int,
     current_user: Annotated[User, Depends(get_current_active_user)],
@@ -51,7 +51,7 @@ def fetch_workout_logs(
     return w
 
 
-@router.get("/{workout_id}/", response_model=WorkoutWithExercisesBaseSchema)
+@router.get("/{workout_id}/", response_model=WorkoutWithExercisesDetails)
 def fetch_workout(
     workout_id: int,
     current_user: Annotated[User, Depends(get_current_active_user)],

@@ -5,10 +5,10 @@ from sqlmodel import Session, select
 from ..catalog.models import CatalogExercisedefinition as ExerciseDefinition
 
 from .schemas import (
-    WorkoutBaseSchema,
-    WorkoutLogBaseSchema,
-    WorkoutLogEntryBaseSchema,
-    WorkoutLogEntrySetBaseSchema,
+    ExerciseListItem,
+    WorkoutLogListItem,
+    WorkoutLogEntryListItem,
+    WorkoutLogEntrySetListItem,
 )
 from ..database import engine
 
@@ -20,10 +20,10 @@ from .models import WorkoutExercise as Exercise
 from .models import WorkoutWorkoutlog as WorkoutLog
 
 
-def get_workouts(user_id: int, session: Session) -> list[WorkoutBaseSchema]:
+def get_workouts(user_id: int, session: Session) -> list[ExerciseListItem]:
     statement = select(Workout).where(Workout.user_id == user_id)
     results = session.exec(statement).all()
-    return [WorkoutBaseSchema.model_validate(workout) for workout in results]
+    return [ExerciseListItem.model_validate(workout) for workout in results]
 
 
 def get_workout(user_id: int, workout_id: int, session: Session) -> Optional[Workout]:
@@ -53,7 +53,7 @@ def last_workout_session(user_id: int, session: Session) -> Optional[dict]:
 
 def get_workout_logs(
     user_id: int, workout_id: int, session: Session
-) -> Optional[list[WorkoutLogBaseSchema]]:
+) -> Optional[list[WorkoutLogListItem]]:
     statement = (
         select(
             WorkoutLog.id, WorkoutLog.completed_at, Workout.name.label("workout_name")
@@ -86,7 +86,7 @@ def get_workout_logs(
             entry_sets = []
             for set in entry["sets"]:
                 entry_sets.append(
-                    WorkoutLogEntrySetBaseSchema(
+                    WorkoutLogEntrySetListItem(
                         set_order=set["set_order"],
                         nb_reps_actual=set["nb_reps_actual"],
                         nb_reps_target=set["nb_reps_target"],
@@ -96,7 +96,7 @@ def get_workout_logs(
                 )
 
             log_exercises.append(
-                WorkoutLogEntryBaseSchema(
+                WorkoutLogEntryListItem(
                     exercise_name=entry["exercise_name"],
                     exercise_order=entry["exercise_order"],
                     sets=entry_sets,
@@ -104,7 +104,7 @@ def get_workout_logs(
             )
 
         formatted_workout_logs.append(
-            WorkoutLogBaseSchema(
+            WorkoutLogListItem(
                 id=workout_log.id,
                 workout_name=workout_log.workout_name,
                 completed_at=workout_log.completed_at,
