@@ -14,7 +14,6 @@ from ..users.schemas import UserSchema as User
 
 from .schemas import TokenData
 
-
 SECRET_KEY = os.getenv("FASTAPI_SECRET_KEY")
 ALGORITHM = os.getenv("FASTAPI_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("FASTAPI_ACCESS_TOKEN_EXPIRE_MINUTES", 30))
@@ -27,7 +26,7 @@ DUMMY_HASH = password_hash.hash("dummypassword")
 
 
 def verify_password(plain_password, hashed_password):
-    #TODO Remove after confirming that all existing hashes in the database have the "argon2" prefix removed.
+    # TODO Remove after confirming that all existing hashes in the database have the "argon2" prefix removed.
     # Django adds the string "argon2" to the beginning of the hash, so we need to remove it before verifying.
     if hashed_password.startswith("argon2"):
         hashed_password = hashed_password[len("argon2") :]
@@ -50,7 +49,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 def authenticate_user(username: str, password: str, session: Session):
-    # When authenticate_user is called with a username that doesn't exist in the database, 
+    # When authenticate_user is called with a username that doesn't exist in the database,
     # we still run verify_password against a dummy hash.
 
     # This ensures the endpoint takes roughly the same amount of time to respond
@@ -65,7 +64,10 @@ def authenticate_user(username: str, password: str, session: Session):
     return user
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    session: Session = Depends(get_session),
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

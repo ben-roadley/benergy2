@@ -4,7 +4,12 @@ from sqlmodel import Session, select
 
 from ..catalog.models import CatalogExercisedefinition as ExerciseDefinition
 
-from .schemas import WorkoutBaseSchema, WorkoutLogBaseSchema, WorkoutLogEntryBaseSchema, WorkoutLogEntrySetBaseSchema
+from .schemas import (
+    WorkoutBaseSchema,
+    WorkoutLogBaseSchema,
+    WorkoutLogEntryBaseSchema,
+    WorkoutLogEntrySetBaseSchema,
+)
 from ..database import engine
 
 from .models import WorkoutWorkout as Workout
@@ -15,19 +20,18 @@ from .models import WorkoutExercise as Exercise
 from .models import WorkoutWorkoutlog as WorkoutLog
 
 
-
 def get_workouts(user_id: int, session: Session) -> list[WorkoutBaseSchema]:
     statement = select(Workout).where(Workout.user_id == user_id)
     results = session.exec(statement).all()
     return [WorkoutBaseSchema.model_validate(workout) for workout in results]
 
 
-
 def get_workout(user_id: int, workout_id: int, session: Session) -> Optional[Workout]:
-    statement = select(Workout).where(Workout.user_id == user_id, Workout.id == workout_id)
+    statement = select(Workout).where(
+        Workout.user_id == user_id, Workout.id == workout_id
+    )
     result = session.exec(statement).one_or_none()
     return result
-
 
 
 def last_workout_session(user_id: int, session: Session) -> Optional[dict]:
@@ -47,12 +51,12 @@ def last_workout_session(user_id: int, session: Session) -> Optional[dict]:
     }
 
 
-def get_workout_logs(user_id: int, workout_id: int, session: Session) -> Optional[list[WorkoutLogBaseSchema]]:
+def get_workout_logs(
+    user_id: int, workout_id: int, session: Session
+) -> Optional[list[WorkoutLogBaseSchema]]:
     statement = (
         select(
-            WorkoutLog.id,
-            WorkoutLog.completed_at,
-            Workout.name.label("workout_name")
+            WorkoutLog.id, WorkoutLog.completed_at, Workout.name.label("workout_name")
         )
         .join(Workout)
         .where(WorkoutLog.user_id == user_id, WorkoutLog.workout_id == workout_id)
@@ -67,7 +71,7 @@ def get_workout_logs(user_id: int, workout_id: int, session: Session) -> Optiona
                 WorkoutLogEntry,
                 SetOfReps,
                 Exercise,
-                ExerciseDefinition.name.label("exercise_name")
+                ExerciseDefinition.name.label("exercise_name"),
             )
             .join(SetOfReps, WorkoutLogEntry.set_of_reps)
             .join(Exercise, SetOfReps.exercise)
@@ -87,7 +91,7 @@ def get_workout_logs(user_id: int, workout_id: int, session: Session) -> Optiona
                         nb_reps_actual=set["nb_reps_actual"],
                         nb_reps_target=set["nb_reps_target"],
                         weight_actual=set["weight_actual"],
-                        weight_target=set["weight_target"]
+                        weight_target=set["weight_target"],
                     )
                 )
 
@@ -95,7 +99,7 @@ def get_workout_logs(user_id: int, workout_id: int, session: Session) -> Optiona
                 WorkoutLogEntryBaseSchema(
                     exercise_name=entry["exercise_name"],
                     exercise_order=entry["exercise_order"],
-                    sets=entry_sets
+                    sets=entry_sets,
                 )
             )
 
@@ -104,7 +108,7 @@ def get_workout_logs(user_id: int, workout_id: int, session: Session) -> Optiona
                 id=workout_log.id,
                 workout_name=workout_log.workout_name,
                 completed_at=workout_log.completed_at,
-                exercises=log_exercises
+                exercises=log_exercises,
             )
         )
 
@@ -114,7 +118,7 @@ def get_workout_logs(user_id: int, workout_id: int, session: Session) -> Optiona
 def group_log_entries_by_exercise(entries):
     """Group log entries by exercise, ordered by exercise_order."""
     grouped = {}
-    
+
     for e in entries:
         log_entry, set_of_reps, exercise, exercise_name = e
         key = exercise.order
@@ -140,23 +144,26 @@ def is_workout_editable(workout: Workout = None) -> bool:
     """Return True when a workout has no training logs and can be edited."""
     if workout is None:
         raise ValueError("workout must be provided")
-    
+
     with Session(engine) as session:
         statement = select(WorkoutLog).where(WorkoutLog.workout_id == workout.id)
         logs = session.exec(statement).all()
         return len(logs) == 0
 
 
-
 def is_workout_stagnating(workout: Workout = None) -> bool:
     """Return True when the last three workout logs have identical entry patterns."""
     if workout is None:
         raise ValueError("workout must be provided")
-    
+
     user_id = workout.user.id
-    
+
     with Session(engine) as session:
-        statement = select(WorkoutLog).where(WorkoutLog.user_id == user_id, WorkoutLog.workout_id == workout.id).order_by(WorkoutLog.completed_at.desc())
+        statement = (
+            select(WorkoutLog)
+            .where(WorkoutLog.user_id == user_id, WorkoutLog.workout_id == workout.id)
+            .order_by(WorkoutLog.completed_at.desc())
+        )
         recent_logs = session.exec(statement).all()[:3]
 
     if len(recent_logs) < 3:
@@ -170,20 +177,23 @@ def is_workout_stagnating(workout: Workout = None) -> bool:
     ]:
         statement = (
             select(WorkoutLogEntry)
-            .join(WorkoutLogEntry.set_of_reps) # Ensure relationship is joined for ordering
-            .join(SetOfReps.exercise)   # Ensure exercise is joined for ordering
+            .join(
+                WorkoutLogEntry.set_of_reps
+            )  # Ensure relationship is joined for ordering
+            .join(SetOfReps.exercise)  # Ensure exercise is joined for ordering
             .where(WorkoutLogEntry.log_id == log.id)
-            .order_by(
-                Exercise.order,
-                SetOfReps.order
-            )
+            .order_by(Exercise.order, SetOfReps.order)
         )
 
         entries = session.exec(statement).all()
 
         return tuple(
             (
-                (e.set_of_reps.exercise.order if e.set_of_reps and e.set_of_reps.exercise else None),
+                (
+                    e.set_of_reps.exercise.order
+                    if e.set_of_reps and e.set_of_reps.exercise
+                    else None
+                ),
                 (e.set_of_reps.order if e.set_of_reps else None),
                 e.nb_reps_actual,
                 (
