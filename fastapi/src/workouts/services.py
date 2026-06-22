@@ -1,14 +1,14 @@
-from typing import Optional, Tuple
-
+from typing import Optional, Tuple, Dict, List
 from sqlmodel import Session, select
 
 from ..catalog.models import CatalogExercisedefinition as ExerciseDefinition
 
 from .schemas import (
-    ExerciseListItem,
+    WorkoutListItem,
     WorkoutLogListItem,
     WorkoutLogEntryListItem,
     WorkoutLogEntrySetListItem,
+    WorkoutVolumeInsightsDetails,
 )
 from ..database import engine
 
@@ -20,10 +20,10 @@ from .models import WorkoutExercise as Exercise
 from .models import WorkoutWorkoutlog as WorkoutLog
 
 
-def get_workouts(user_id: int, session: Session) -> list[ExerciseListItem]:
+def get_workouts(user_id: int, session: Session) -> list[WorkoutListItem]:
     statement = select(Workout).where(Workout.user_id == user_id)
     results = session.exec(statement).all()
-    return [ExerciseListItem.model_validate(workout) for workout in results]
+    return [WorkoutListItem.model_validate(workout) for workout in results]
 
 
 def get_workout(user_id: int, workout_id: int, session: Session) -> Optional[Workout]:
@@ -207,3 +207,118 @@ def is_workout_stagnating(workout: Workout = None) -> bool:
 
     patterns = [_log_pattern(session, log) for log in recent_logs]
     return patterns[0] == patterns[1] == patterns[2]
+
+
+def compute_volume_insights(
+    session: Session, workout: Workout, profile_weight_kg: float = None
+) -> dict:
+    """Compute per-exercise and total training volume over time for a workout.
+
+    For each completed session (WorkoutLog), computes the volume
+    (reps × effective weight) for every exercise. Bodyweight exercises
+    fall back to the user's profile weight when available, or 0.0.
+
+    Returns a dict with session labels, per-exercise volumes, and total
+    volume per session. Empty lists are returned when no logs exist.
+    """
+    statement = (
+        select(WorkoutLog)
+        .where(WorkoutLog.workout_id == workout.id)
+        .order_by(WorkoutLog.completed_at)
+    )
+    logs = session.exec(statement).all()
+
+    statement = (
+        select(Exercise)
+        .where(Exercise.workout_id == workout.id)
+        .order_by(Exercise.order)
+    )
+    exercises = session.exec(statement).all()
+
+    # Determine is_bodyweight for each exercise across all sessions.
+    exercise_all_bodyweight: Dict[int, bool] = {ex.id: True for ex in exercises}
+    for log in logs:
+        log_entry_statement = (
+            select(
+                WorkoutLogEntry,
+                SetOfReps,
+                Exercise,
+            )
+            .join(SetOfReps, WorkoutLogEntry.set_of_reps)
+            .join(Exercise, SetOfReps.exercise)
+            .where(WorkoutLogEntry.log_id == log.id)
+            .order_by(Exercise.order, SetOfReps.order)
+        )
+        log_entries = session.exec(log_entry_statement).all()
+
+        for entry in log_entries:
+            ex_pk = entry[1].exercise_id
+            if ex_pk in exercise_all_bodyweight:
+                if (
+                    entry[0].weight_actual is not None
+                    and float(entry[0].weight_actual) != 0.0
+                ):
+                    exercise_all_bodyweight[ex_pk] = False
+
+    sessions = []
+    total_volume: List[float] = []
+    exercise_volumes: Dict[int, List[float]] = {ex.id: [] for ex in exercises}
+
+    for log in logs:
+        label = log.completed_at.strftime("%d %b").lstrip("0")
+        sessions.append(label)
+
+        # Group entries by exercise id
+        entries_by_exercise: Dict[int, list] = {ex.id: [] for ex in exercises}
+        log_entry_statement = (
+            select(
+                WorkoutLogEntry,
+                SetOfReps,
+                Exercise,
+            )
+            .join(SetOfReps, WorkoutLogEntry.set_of_reps)
+            .join(Exercise, SetOfReps.exercise)
+            .where(WorkoutLogEntry.log_id == log.id)
+            .order_by(Exercise.order, SetOfReps.order)
+        )
+        log_entries = session.exec(log_entry_statement).all()
+        for entry in log_entries:
+            ex_pk = entry[1].exercise_id
+            if ex_pk in entries_by_exercise:
+                entries_by_exercise[ex_pk].append(entry)
+
+        session_total = 0.0
+        for ex in exercises:
+            vol = 0.0
+            for entry in entries_by_exercise[ex.id]:
+                if (
+                    entry[0].weight_actual is not None
+                    and float(entry[0].weight_actual) != 0.0
+                ):
+                    eff_weight = float(entry[0].weight_actual)
+                elif profile_weight_kg is not None:
+                    eff_weight = float(profile_weight_kg)
+                else:
+                    eff_weight = 0.0
+                vol += entry[0].nb_reps_actual * eff_weight
+            exercise_volumes[ex.id].append(vol)
+            session_total += vol
+        total_volume.append(session_total)
+
+    return WorkoutVolumeInsightsDetails(
+        workout_name=workout.name,
+        bodyweight_kg=(
+            float(profile_weight_kg) if profile_weight_kg is not None else None
+        ),
+        sessions=sessions,
+        total_volume=total_volume,
+        exercises=[
+            {
+                "name": ex.exercise_definition.name,
+                "order": ex.order,
+                "is_bodyweight": exercise_all_bodyweight[ex.id],
+                "volume_per_session": exercise_volumes[ex.id],
+            }
+            for ex in exercises
+        ],
+    )

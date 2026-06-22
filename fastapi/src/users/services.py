@@ -1,5 +1,4 @@
 from sqlmodel import Session, select
-from typing import Tuple
 
 from .schemas import (
     UserWithPassword,
@@ -80,18 +79,16 @@ def clear_profile(user_id: int, session: Session) -> ProfileDetails:
     return None
 
 
-def get_or_create_profile(
-    user_id: int, session: Session
-) -> Tuple[ProfileDetails, bool]:
+def get_or_create_profile(user_id: int, session: Session) -> ProfileDetails:
     instance = session.exec(select(Profile).where(Profile.user_id == user_id)).first()
     if instance:
-        return ProfileDetails.model_validate(instance), False
+        return ProfileDetails.model_validate(instance)
     else:
         instance = Profile(user_id=user_id)
         session.add(instance)
         session.commit()
         session.refresh(instance)
-        return ProfileDetails.model_validate(instance), True
+        return ProfileDetails.model_validate(instance)
 
 
 def get_profile_options() -> ProfileOptionsDetails:

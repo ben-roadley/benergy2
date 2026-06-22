@@ -40,7 +40,7 @@ def fetch_profile_details(
     current_user: Annotated[User, Depends(get_current_active_user)],
     session: Session = Depends(get_session),
 ):
-    profile, created = get_or_create_profile(user_id=current_user.id, session=session)
+    profile = get_or_create_profile(user_id=current_user.id, session=session)
     return profile
 
 

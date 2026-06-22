@@ -51,7 +51,7 @@ export async function fetchWorkoutLogs(id) {
 }
 
 export async function fetchWorkoutVolumeInsights(id) {
-  const { data } = await api.get(`/api/workouts/${id}/insights/volume/`)
+  const { data } = await api.get(`/workouts/${id}/insights/volume/`)
   return data
 }
 
