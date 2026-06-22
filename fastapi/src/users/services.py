@@ -28,6 +28,36 @@ def get_user(username: str, session: Session):
         )
 
 
+def clear_profile(user_id: int, session: Session) -> ProfileDetails:
+    """Reset all optional profile fields to their defaults.
+
+    Nullable fields (date_of_birth, weight_kg, height_cm, training_days_per_week)
+    are set to None. Text/char fields are set to ''. JSON fields (goals, equipment)
+    are set to []. The user relation is never modified.
+    """
+    profile = session.exec(select(Profile).where(Profile.user_id == user_id)).first()
+    if profile:
+        profile.display_name = ""
+        profile.date_of_birth = None
+        profile.sex = ""
+        profile.weight_kg = None
+        profile.height_cm = None
+        profile.fitness_level = ""
+        profile.goals = []
+        profile.equipment = []
+        profile.session_duration = ""
+        profile.training_days_per_week = None
+        profile.injury_history = ""
+        profile.lifestyle_description = ""
+        profile.sleep_quality = ""
+        profile.stress_level = ""
+        session.add(profile)
+        session.commit()
+        session.refresh(profile)
+        return ProfileDetails.model_validate(profile)
+    return None
+
+
 def get_or_create_profile(
     user_id: int, session: Session
 ) -> Tuple[ProfileDetails, bool]:
