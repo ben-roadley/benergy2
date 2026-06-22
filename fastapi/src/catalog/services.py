@@ -1,12 +1,12 @@
 from sqlmodel import Session, select
 
-from .schemas import CatalogExercisedefinitionBaseSchema
+from .schemas import CatalogExerciseDefinitionRead
 from .models import CatalogExercisedefinition
 
 
 def search_exercise_definitions(
     query: str, session: Session
-) -> list[CatalogExercisedefinitionBaseSchema]:
+) -> list[CatalogExerciseDefinitionRead]:
     statement = (
         select(CatalogExercisedefinition)
         .where(CatalogExercisedefinition.name.ilike(f"%{query}%"))
@@ -14,6 +14,5 @@ def search_exercise_definitions(
     )
     results = session.exec(statement).all()
     return [
-        CatalogExercisedefinitionBaseSchema.model_validate(exercise)
-        for exercise in results
+        CatalogExerciseDefinitionRead.model_validate(exercise) for exercise in results
     ]
