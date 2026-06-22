@@ -10,7 +10,7 @@ from sqlmodel import Session
 
 from ..dependencies import get_session
 from ..users.services import get_user
-from ..users.schemas import UserSchema as User
+from ..users.schemas import User
 
 from .schemas import TokenData
 

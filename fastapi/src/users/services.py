@@ -2,7 +2,7 @@ from sqlmodel import Session, select
 from typing import Tuple
 
 from .schemas import (
-    UserInDBSchema as UserInDB,
+    UserWithPassword,
     ProfileDetails,
     ProfileUpdate,
     ProfileOptionsDetails,
@@ -17,12 +17,12 @@ from .schemas import (
 from .models import AuthUser as User, UsersUserprofile as Profile
 
 
-def get_user(username: str, session: Session):
+def get_user(username: str, session: Session) -> UserWithPassword:
     statement = select(User).where(User.username == username)
     results = session.exec(statement).all()
 
     if len(results) == 1:
-        return UserInDB(**results[0].model_dump())
+        return UserWithPassword(**results[0].model_dump())
     else:
         raise ValueError(
             f"User with username '{username}' not found or multiple users with the same username found."
