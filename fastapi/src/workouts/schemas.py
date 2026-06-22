@@ -2,7 +2,7 @@ import datetime
 
 from pydantic import BaseModel, ConfigDict, computed_field
 
-from ..catalog.schemas import CatalogExercisedefinitionBaseSchema
+from ..catalog.schemas import CatalogExerciseDefinitionRead
 from ..users.schemas import User
 
 
@@ -21,7 +21,7 @@ class ExerciseBaseSchema(BaseModel):
     rest_time_after: int
     set_of_reps: list["SetOfRepsBaseSchema"]
 
-    exercise_definition: "CatalogExercisedefinitionBaseSchema"
+    exercise_definition: "CatalogExerciseDefinitionRead"
 
     @computed_field
     @property
