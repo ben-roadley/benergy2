@@ -1,3 +1,4 @@
+import datetime
 from enum import Enum
 from pydantic import BaseModel, ConfigDict
 from typing import List
@@ -77,7 +78,7 @@ class ProfileDetails(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     display_name: str
-    date_of_birth: str | None = None
+    date_of_birth: datetime.date | None = None
     sex: SexChoices
     weight_kg: float | None = None
     height_cm: int | None = None
@@ -90,6 +91,24 @@ class ProfileDetails(BaseModel):
     lifestyle_description: str
     sleep_quality: SleepQualityChoices
     stress_level: StressLevelChoices
+
+
+class ProfileUpdate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    display_name: str | None = None
+    date_of_birth: datetime.date | None = None
+    sex: SexChoices | None = None
+    weight_kg: float | None = None
+    height_cm: int | None = None
+    fitness_level: FitnessLevelChoices | None = None
+    goals: List[ValidGoals] | None = None
+    equipment: List[ValidEquipment] | None = None
+    session_duration: SessionDurationChoices | None = None
+    training_days_per_week: int | None = None
+    injury_history: str | None = None
+    lifestyle_description: str | None = None
+    sleep_quality: SleepQualityChoices | None = None
+    stress_level: StressLevelChoices | None = None
 
 
 class ProfileOptionsDetails(BaseModel):

@@ -4,6 +4,7 @@ from typing import Tuple
 from .schemas import (
     UserInDBSchema as UserInDB,
     ProfileDetails,
+    ProfileUpdate,
     ProfileOptionsDetails,
     ValidEquipment,
     ValidGoals,
@@ -26,6 +27,27 @@ def get_user(username: str, session: Session):
         raise ValueError(
             f"User with username '{username}' not found or multiple users with the same username found."
         )
+
+
+def update_profile(
+    user_id: int, session: Session, profile: ProfileUpdate
+) -> ProfileDetails:
+    """Update the user's profile with the provided details.
+
+    Only fields that are not None in the `profile` argument will be updated.
+    """
+    instance = session.exec(select(Profile).where(Profile.user_id == user_id)).first()
+    if not instance:
+        raise ValueError(f"Profile for user_id {user_id} not found.")
+
+    update_data = profile.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(instance, key, value)
+
+    session.add(instance)
+    session.commit()
+    session.refresh(instance)
+    return ProfileDetails.model_validate(instance)
 
 
 def clear_profile(user_id: int, session: Session) -> ProfileDetails:
