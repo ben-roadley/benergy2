@@ -13,6 +13,7 @@ from .schemas import (
     WorkoutWithExercisesDetails,
     WorkoutLogListItem,
     WorkoutVolumeInsightsDetails,
+    WarmupSuggestionsResponse,
 )
 from .services import (
     compute_volume_insights,
@@ -20,6 +21,11 @@ from .services import (
     get_workout,
     last_workout_session,
     get_workout_logs,
+)
+from .warmup_suggestions_service import (
+    WarmupSuggestionError,
+    get_or_generate_warmup_suggestions,
+    force_regenerate_warmup_suggestions,
 )
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
@@ -88,3 +94,70 @@ def fetch_workout(
     if not w:
         raise HTTPException(status_code=404, detail="Workout not found.")
     return w
+
+
+@router.get(
+    "/{workout_id}/warmup-suggestions/", response_model=WarmupSuggestionsResponse
+)
+def fetch_warmup_suggestions(
+    workout_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: Session = Depends(get_session),
+):
+    workout = get_workout(
+        user_id=current_user.id, workout_id=workout_id, session=session
+    )
+    if not workout:
+        raise HTTPException(status_code=404, detail="Workout not found.")
+
+    try:
+        profile = get_or_create_profile(user_id=current_user.id, session=session)
+    except Exception:
+        profile = None
+
+    try:
+        suggestion = get_or_generate_warmup_suggestions(
+            workout=workout, profile=profile, session=session
+        )
+    except WarmupSuggestionError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+    return WarmupSuggestionsResponse(
+        suggestions=suggestion.suggestions,
+        generated_at=suggestion.generated_at,
+    )
+
+
+@router.post(
+    "/{workout_id}/warmup-suggestions/", response_model=WarmupSuggestionsResponse
+)
+def regenerate_warmup_suggestions(
+    workout_id: int,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: Session = Depends(get_session),
+):
+    workout = get_workout(
+        user_id=current_user.id, workout_id=workout_id, session=session
+    )
+    if not workout:
+        raise HTTPException(status_code=404, detail="Workout not found.")
+
+    try:
+        profile = get_or_create_profile(user_id=current_user.id, session=session)
+    except Exception:
+        profile = None
+
+    try:
+        suggestion = force_regenerate_warmup_suggestions(
+            workout=workout, profile=profile, session=session
+        )
+    except WarmupSuggestionError as exc:
+        print(
+            f"Error generating warmup suggestions: {exc}"
+        )  # Log the error for debugging
+        raise HTTPException(status_code=503, detail=str(exc))
+
+    return WarmupSuggestionsResponse(
+        suggestions=suggestion.suggestions,
+        generated_at=suggestion.generated_at,
+    )

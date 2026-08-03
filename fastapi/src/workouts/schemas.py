@@ -86,3 +86,13 @@ class WorkoutVolumeInsightsDetails(BaseModel):
     sessions: list[str]
     total_volume: list[float]
     exercises: list[dict]  # Each dict contains exercise_name and volumes list
+
+
+class WarmupSuggestionItem(BaseModel):
+    name: str
+    description: str
+
+
+class WarmupSuggestionsResponse(BaseModel):
+    suggestions: list[WarmupSuggestionItem]
+    generated_at: datetime.datetime
