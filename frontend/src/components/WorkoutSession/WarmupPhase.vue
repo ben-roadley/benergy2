@@ -6,7 +6,7 @@
     <Button label="Go" size="large" class="action-btn" @click="$emit('start')" />
 
     <!-- Warm-up suggestions -->
-    <div v-if="ws.workout.exercises?.length" class="suggestions-section">
+    <!-- <div v-if="ws.workout.exercises?.length" class="suggestions-section">
       <div class="suggestions-header">
         <span class="suggestions-title">Warm-up ideas</span>
         <Button
@@ -48,16 +48,16 @@
           >▶ How to</a>
         </li>
       </ul>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
 import Button from 'primevue/button'
-import ProgressSpinner from 'primevue/progressspinner'
+// import ProgressSpinner from 'primevue/progressspinner'
 import { useWorkoutStore } from '@/stores/workout'
-import { useWarmupSuggestionsStore } from '@/stores/warmupSuggestions'
+// import { useWarmupSuggestionsStore } from '@/stores/warmupSuggestions'
 import { formatTime } from './utils'
 import './session.css'
 
@@ -65,12 +65,12 @@ defineProps({ timer: { type: Number, required: true } })
 defineEmits(['start'])
 
 const ws = useWorkoutStore()
-const wss = useWarmupSuggestionsStore()
+// const wss = useWarmupSuggestionsStore()
 
-onMounted(() => {
-  wss.reset()
-  wss.fetchSuggestions(ws.workout.id)
-})
+// onMounted(() => {
+//   wss.reset()
+//   wss.fetchSuggestions(ws.workout.id)
+// })
 </script>
 
 <style scoped>
