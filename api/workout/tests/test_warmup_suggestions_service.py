@@ -172,14 +172,12 @@ class TestBuildWarmupPrompt:
 
 class TestCallLlm:
     def test_raises_when_api_key_not_configured(self, settings):
-        settings.LLM_API_KEY = ""
+        settings.HF_TOKEN = ""
         with pytest.raises(WarmupSuggestionError, match="not configured"):
             call_llm("some prompt")
 
     def test_returns_parsed_suggestions_on_success(self, settings):
-        settings.LLM_API_KEY = "test-key"
-        settings.LLM_API_BASE = "https://example.com/v1"
-        settings.LLM_MODEL = "gpt-4o-mini"
+        settings.HF_TOKEN = "test-key"
 
         fake_data = [{"name": "Arm circles", "description": "Warm up the shoulders."}]
         mock_response = MagicMock()
@@ -192,7 +190,7 @@ class TestCallLlm:
         assert result == fake_data
 
     def test_raises_on_invalid_json(self, settings):
-        settings.LLM_API_KEY = "test-key"
+        settings.HF_TOKEN = "test-key"
         mock_response = MagicMock()
         mock_response.choices[0].message.content = "not json at all"
 
@@ -202,7 +200,7 @@ class TestCallLlm:
                 call_llm("prompt")
 
     def test_raises_when_response_is_not_list(self, settings):
-        settings.LLM_API_KEY = "test-key"
+        settings.HF_TOKEN = "test-key"
         mock_response = MagicMock()
         mock_response.choices[0].message.content = json.dumps({"name": "oops"})
 
@@ -212,7 +210,7 @@ class TestCallLlm:
                 call_llm("prompt")
 
     def test_raises_when_item_missing_required_keys(self, settings):
-        settings.LLM_API_KEY = "test-key"
+        settings.HF_TOKEN = "test-key"
         mock_response = MagicMock()
         mock_response.choices[0].message.content = json.dumps([{"name": "only name"}])
 
@@ -222,7 +220,7 @@ class TestCallLlm:
                 call_llm("prompt")
 
     def test_raises_when_openai_not_installed(self, settings):
-        settings.LLM_API_KEY = "test-key"
+        settings.HF_TOKEN = "test-key"
         with patch.dict(sys.modules, {"openai": None}):
             with pytest.raises(
                 WarmupSuggestionError, match="openai package is not installed"
@@ -230,7 +228,7 @@ class TestCallLlm:
                 call_llm("prompt")
 
     def test_raises_on_network_error(self, settings):
-        settings.LLM_API_KEY = "test-key"
+        settings.HF_TOKEN = "test-key"
 
         with patch("openai.OpenAI") as MockClient:
             MockClient.return_value.chat.completions.create.side_effect = (
