@@ -9,13 +9,13 @@ Main features:
 - User profile (personal info, fitness level, goals, equipment, lifestyle) — foundation for future AI workout advice
 - Workout editor with catalog-backed exercise autocomplete (873 exercise definitions, rich search with category/equipment/muscles)
 - Live workout mode (timers for warm-up and resting, count sets/reps)
-- AI-generated warm-up suggestions during the warm-up phase (GitHub Models / Ollama, hash-cached per workout)
+- AI-generated warm-up suggestions during the warm-up phase (HuggingFace inference api for now, self-hosted via llama.cpp in the future)
 - Workout session logging, history viewer (per-workout table of past sessions with reps and weights), and stagnation detection
 - Workout Insights: volume-over-time charts (sets × reps × weight) per exercise and as a global total, with bodyweight fallback from user profile
 
 Tech stack:
 - REST API backend (Django) and Vite frontend (Vue)
-- LLM integration via OpenAI-compatible SDK (GitHub Models or local Ollama)
+- LLM integration via OpenAI-compatible SDK
 - Container-first dev workflow with `Taskfile.yml` wrappers
 
 => This is a small, container-first monorepo: a Django REST API (`api/`) and a Vite frontend (`frontend/`). Built for local development with `Taskfile.yml` wrappers and Docker Compose. 🧰🚀
@@ -66,7 +66,7 @@ task b:lint
 
 ```bash
 task build            # run build tasks (see Taskfile.yml)
-task deploy           # deploy/push images (project-specific)
+task prod:deploy      # deploy latest images in production
 ```
 
 **Project layout (high level)**
@@ -88,7 +88,7 @@ Thanks for checking out benergy — happy hacking! ✨
 This repo includes two GitHub Actions workflows:
 
 - `ci-dev.yml` (runs on push to `dev`): runs backend unit tests (pytest) with coverage and frontend tests (npm). The backend job enforces 100% coverage.
-- `release.yml` (runs on push to `main`): creates a timestamped tag, then builds and pushes Docker images (amd64 + arm64) to GitHub Container Registry (GHCR) using the `task` targets in `Taskfile.yml` (`task build:all-amd64` and `task build:all-arm64`).
+- `release.yml` (runs when a new tag is pushed to `main`): builds and pushes Docker images (amd64 + arm64) to GitHub Container Registry (GHCR) using the `task` targets in `Taskfile.yml` (`task build:all-amd64` and `task build:all-arm64`).
 
 Secrets and tokens
 - Actions already provide a `GITHUB_TOKEN` with repository-scoped permissions; the release workflow uses it to authenticate to GHCR. No additional secret is required for Actions to push packages if you keep the workflows as-is.
