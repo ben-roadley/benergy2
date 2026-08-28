@@ -31,7 +31,7 @@ export async function updateWorkout(id, payload) {
 }
 
 export async function patchWorkout(id, payload) {
-  const { data } = await api.patch(`/api/workouts/${id}/`, payload)
+  const { data } = await api.patch(`/workouts/${id}/`, payload)
   return data
 }
 

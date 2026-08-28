@@ -125,7 +125,7 @@ class WorkoutExercise(SQLModel, table=True):
 
     exercise_definition: "CatalogExercisedefinition" = Relationship()
     workout: "WorkoutWorkout" = Relationship(back_populates="exercises")
-    set_of_reps: list["WorkoutSetofreps"] = Relationship(back_populates="exercise")
+    sets_of_reps: list["WorkoutSetofreps"] = Relationship(back_populates="exercise")
 
 
 class WorkoutSetofreps(SQLModel, table=True):
@@ -167,7 +167,7 @@ class WorkoutSetofreps(SQLModel, table=True):
         default=None, sa_column=Column("weight", Numeric(6, 2))
     )
 
-    exercise: "WorkoutExercise" = Relationship(back_populates="set_of_reps")
+    exercise: "WorkoutExercise" = Relationship(back_populates="sets_of_reps")
     workout_workoutlogentry: list["WorkoutWorkoutlogentry"] = Relationship(
         back_populates="set_of_reps"
     )

@@ -209,6 +209,195 @@ def is_workout_stagnating(workout: Workout = None) -> bool:
     return patterns[0] == patterns[1] == patterns[2]
 
 
+def validate_allowed_update(
+    session: Session,
+    workout: Workout,
+    exercises_data: list[dict],
+) -> tuple[bool, str | None]:
+    """Validate that a payload doesn't change workout structure when logs exist."""
+    existing_exercises = list(
+        session.exec(
+            select(Exercise)
+            .where(Exercise.workout_id == workout.id)
+            .order_by(Exercise.order)
+        ).all()
+    )
+
+    if len(existing_exercises) != len(exercises_data):
+        return False, "Cannot add or remove exercises when a workout has training logs."
+
+    allowed_set_fields = {"nb_reps", "weight"}
+
+    for index, (db_exercise, incoming_exercise) in enumerate(
+        zip(existing_exercises, exercises_data), start=1
+    ):
+        if db_exercise.exercise_definition_id != incoming_exercise.get(
+            "exercise_definition_slug"
+        ):
+            return (
+                False,
+                f"Cannot change exercise definition or order for exercise #{index}.",
+            )
+
+        incoming_sets = incoming_exercise.get("sets_of_reps") or []
+        existing_sets = list(
+            session.exec(
+                select(SetOfReps)
+                .where(SetOfReps.exercise_id == db_exercise.id)
+                .order_by(SetOfReps.order)
+            ).all()
+        )
+
+        if len(existing_sets) != len(incoming_sets):
+            return (
+                False,
+                f"Cannot add or remove sets for exercise order #{db_exercise.order}.",
+            )
+
+        for set_index, (db_set, incoming_set) in enumerate(
+            zip(existing_sets, incoming_sets), start=1
+        ):
+            if not isinstance(incoming_set, dict):
+                return (
+                    False,
+                    f"Invalid set payload for exercise order #{db_exercise.order}, set #{set_index}.",
+                )
+            extra_fields = set(incoming_set.keys()) - allowed_set_fields
+            if extra_fields:
+                return (
+                    False,
+                    f"Not allowed to change fields {sorted(list(extra_fields))} for sets when logs exist.",
+                )
+
+    return True, None
+
+
+def build_exercises(
+    session: Session, workout: Workout, exercises_data: list[dict]
+) -> None:
+    """Create Exercise and SetOfReps rows for a Workout from incoming payload."""
+    for order, ex in enumerate(exercises_data, start=1):
+        exercise_def = session.exec(
+            select(ExerciseDefinition).where(
+                ExerciseDefinition.slug == ex["exercise_definition_slug"]
+            )
+        ).one_or_none()
+        if exercise_def is None:
+            raise ValueError(
+                f"Exercise definition '{ex['exercise_definition_slug']}' not found."
+            )
+
+        exercise = Exercise(
+            workout_id=workout.id,
+            order=order,
+            exercise_definition_id=exercise_def.slug,
+            rest_time_after=ex.get("rest_time_after", 60),
+        )
+        session.add(exercise)
+        session.flush()
+
+        for i, s in enumerate(ex["sets_of_reps"], start=1):
+            session.add(
+                SetOfReps(
+                    exercise_id=exercise.id,
+                    order=i,
+                    nb_reps=s["nb_reps"],
+                    weight=s.get("weight"),
+                )
+            )
+
+
+def apply_top_level_update(
+    session: Session, workout: Workout, workout_data: dict
+) -> Workout:
+    """Update basic Workout fields and persist the instance."""
+    if not workout_data:
+        return workout
+    if not is_workout_editable(workout=workout):
+        raise ValueError(
+            "Workout cannot be edited because training logs exist; "
+            "only SetOfReps nb_reps/weight may be updated."
+        )
+    if "name" in workout_data:
+        workout.name = workout_data["name"]
+    if "description" in workout_data:
+        workout.description = workout_data["description"]
+    session.add(workout)
+    return workout
+
+
+def replace_all_exercises(
+    session: Session, workout: Workout, exercises_data: list[dict]
+) -> None:
+    """Delete existing exercises and rebuild them from payload."""
+    existing = session.exec(
+        select(Exercise).where(Exercise.workout_id == workout.id)
+    ).all()
+    for ex in existing:
+        sets = session.exec(
+            select(SetOfReps).where(SetOfReps.exercise_id == ex.id)
+        ).all()
+        for s in sets:
+            session.delete(s)
+        session.delete(ex)
+    session.flush()
+    build_exercises(session=session, workout=workout, exercises_data=exercises_data)
+
+
+def patch_existing_sets(
+    session: Session, workout: Workout, exercises_data: list[dict]
+) -> None:
+    """Patch allowed fields on existing SetOfReps for a non-editable workout."""
+    for order, ex in enumerate(exercises_data, start=1):
+        exercise = session.exec(
+            select(Exercise).where(
+                Exercise.workout_id == workout.id, Exercise.order == order
+            )
+        ).one()
+        for s_index, s_payload in enumerate(ex.get("sets_of_reps", []), start=1):
+            set_obj = session.exec(
+                select(SetOfReps).where(
+                    SetOfReps.exercise_id == exercise.id, SetOfReps.order == s_index
+                )
+            ).one()
+            if "nb_reps" in s_payload:
+                set_obj.nb_reps = s_payload["nb_reps"]
+            if "weight" in s_payload:
+                set_obj.weight = s_payload["weight"]
+            session.add(set_obj)
+
+
+def update_workout_from_payload(
+    session: Session,
+    workout: Workout,
+    workout_data: dict,
+    exercises_data: list[dict] | None,
+) -> Workout:
+    """Apply a validated payload to an existing Workout instance."""
+    if exercises_data is None:
+        return apply_top_level_update(
+            session=session, workout=workout, workout_data=workout_data
+        )
+
+    if is_workout_editable(workout=workout):
+        apply_top_level_update(
+            session=session, workout=workout, workout_data=workout_data
+        )
+        replace_all_exercises(
+            session=session, workout=workout, exercises_data=exercises_data
+        )
+        return workout
+
+    ok, msg = validate_allowed_update(
+        session=session, workout=workout, exercises_data=exercises_data
+    )
+    if not ok:
+        raise ValueError(msg)
+
+    patch_existing_sets(session=session, workout=workout, exercises_data=exercises_data)
+    return workout
+
+
 def compute_volume_insights(
     session: Session, workout: Workout, profile_weight_kg: float = None
 ) -> dict:

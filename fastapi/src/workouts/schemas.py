@@ -19,7 +19,7 @@ class ExerciseListItem(BaseModel):
     id: int | None = None
     order: int | None = None
     rest_time_after: int | None = None
-    set_of_reps: list["SetOfRepsListItem"] | None = None
+    sets_of_reps: list["SetOfRepsListItem"] | None = None
 
     exercise_definition: CatalogExerciseDefinitionListItem
 
@@ -86,6 +86,23 @@ class WorkoutVolumeInsightsDetails(BaseModel):
     sessions: list[str]
     total_volume: list[float]
     exercises: list[dict]  # Each dict contains exercise_name and volumes list
+
+
+class SetOfRepsWriteItem(BaseModel):
+    nb_reps: int
+    weight: float | None = None
+
+
+class ExerciseWriteItem(BaseModel):
+    exercise_definition_slug: str
+    sets_of_reps: list[SetOfRepsWriteItem]
+    rest_time_after: int = 60
+
+
+class WorkoutUpdatePayload(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    exercises: list[ExerciseWriteItem] | None = None
 
 
 class WarmupSuggestionItem(BaseModel):
