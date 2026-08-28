@@ -32,9 +32,9 @@ CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost"
     " "
 )
 
-CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:8081").split(
-    " "
-)
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:8081"
+).split(" ")
 
 USE_X_FORWARDED_HOST = True
 
@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'corsheaders',
+    "corsheaders",
     "rest_framework",
     "drf_spectacular",
     "users",
@@ -169,8 +169,4 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # LLM settings for AI-powered warm-up suggestions.
-# Set LLM_API_BASE to https://models.inference.ai.azure.com for GitHub Models,
-# or http://ollama:11434/v1 for a self-hosted Ollama instance.
-LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
-LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://models.inference.ai.azure.com")
-LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+HF_TOKEN = os.environ.get("HF_TOKEN", "")

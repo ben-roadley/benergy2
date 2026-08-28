@@ -85,26 +85,33 @@ def call_llm(prompt: str) -> list:
     Raises WarmupSuggestionError for any failure: missing configuration,
     network errors, invalid JSON, or unexpected response shape.
     """
-    if not settings.LLM_API_KEY:
+    if not settings.HF_TOKEN:
         raise WarmupSuggestionError("AI suggestions are not configured.")
 
     try:
-        import openai
+        from openai import OpenAI
     except ImportError as exc:
         raise WarmupSuggestionError("openai package is not installed.") from exc
-
     try:
-        client = openai.OpenAI(
-            api_key=settings.LLM_API_KEY,
-            base_url=settings.LLM_API_BASE,
+        client = OpenAI(
+            base_url="https://router.huggingface.co/v1",
+            api_key=settings.HF_TOKEN,
         )
-        response = client.chat.completions.create(
-            model=settings.LLM_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            max_tokens=512,
+        completion = client.chat.completions.create(
+            model="Qwen/Qwen3.8-27B:deepinfra",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt,
+                        },
+                    ],
+                }
+            ],
         )
-        content = response.choices[0].message.content.strip()
+        content = completion.choices[0].message.content
     except Exception as exc:
         raise WarmupSuggestionError(f"LLM call failed: {exc}") from exc
 
