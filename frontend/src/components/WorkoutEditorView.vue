@@ -404,7 +404,7 @@ async function handleSave() {
         await patchWorkout(workoutId.value, payload)
       }
     }
-    router.push('/')
+    router.push('/workouts/manage')
   } catch (err) {
     if (err.response?.data) {
       errors.value = { exercises: 'Save failed. Please check your input.' }
