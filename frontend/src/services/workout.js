@@ -35,15 +35,15 @@ export async function patchWorkout(id, payload) {
   return data
 }
 
-// export async function fetchWarmupSuggestions(id) {
-//   const { data } = await api.get(`/api/workouts/${id}/warmup-suggestions/`)
-//   return data
-// }
+export async function fetchWarmupSuggestions(id) {
+  const { data } = await api.get(`/workouts/${id}/warmup-suggestions/`)
+  return data
+}
 
-// export async function refreshWarmupSuggestions(id) {
-//   const { data } = await api.post(`/api/workouts/${id}/warmup-suggestions/`)
-//   return data
-// }
+export async function refreshWarmupSuggestions(id) {
+  const { data } = await api.post(`/workouts/${id}/warmup-suggestions/`)
+  return data
+}
 
 export async function fetchWorkoutLogs(id) {
   const { data } = await api.get(`/workouts/${id}/logs/`)
