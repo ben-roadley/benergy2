@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional, Tuple, Dict, List
 from sqlmodel import Session, select
 
@@ -18,6 +19,124 @@ from .models import WorkoutWorkoutlogentry as WorkoutLogEntry
 from .models import WorkoutSetofreps as SetOfReps
 from .models import WorkoutExercise as Exercise
 from .models import WorkoutWorkoutlog as WorkoutLog
+
+
+def workout_log_create(
+    user_id: int, workout_id: int, results: list[dict], session: Session
+) -> WorkoutLog:
+    """Create a WorkoutLog and WorkoutLogEntry rows from a results payload.
+
+    The function is forgiving about payload key naming (camelCase or snake_case).
+    """
+    workout = session.exec(
+        select(Workout).where(Workout.id == workout_id)
+    ).one_or_none()
+    if workout is None:
+        raise ValueError(f"Workout {workout_id} not found.")
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    log = WorkoutLog(user_id=user_id, workout_id=workout.id, completed_at=now)
+    session.add(log)
+    session.flush()
+
+    sets_statement = (
+        select(SetOfReps, Exercise)
+        .join(Exercise, SetOfReps.exercise)
+        .where(Exercise.workout_id == workout.id)
+    )
+    sets_result = session.exec(sets_statement).all()
+    set_lookup_by_order = {
+        (exercise.order, set_of_reps.order): set_of_reps.id
+        for set_of_reps, exercise in sets_result
+    }
+
+    for item in results:
+        set_of_reps_id = item.get("set_of_reps") or item.get("setOfReps")
+        if set_of_reps_id is None:
+            exercise_order = item.get("exercise_order") or item.get("exerciseOrder")
+            set_order = item.get("set_order") or item.get("setOrder")
+            if exercise_order is not None and set_order is not None:
+                set_of_reps_id = set_lookup_by_order.get((exercise_order, set_order))
+
+        if not set_of_reps_id:
+            continue
+
+        nb_reps_target = item.get("nb_reps_target") or item.get("nbRepsTarget")
+        nb_reps_actual = item.get("nb_reps_actual") or item.get("nbRepsActual")
+        weight_actual = (
+            item.get("weight_actual") or item.get("weightActual") or item.get("weight")
+        )
+        weight_target = item.get("weight_target") or item.get("weightTarget")
+
+        session.add(
+            WorkoutLogEntry(
+                log_id=log.id,
+                set_of_reps_id=set_of_reps_id,
+                nb_reps_target=nb_reps_target,
+                nb_reps_actual=nb_reps_actual,
+                weight_actual=weight_actual,
+                weight_target=weight_target,
+            )
+        )
+
+    update_targets(session=session, workout=workout, results=results)
+
+    return log
+
+
+def update_targets(session: Session, workout: Workout, results: list[dict]) -> None:
+    """Update SetOfReps target weight/reps based on a batch of result entries."""
+    sets_statement = (
+        select(SetOfReps, Exercise)
+        .join(Exercise, SetOfReps.exercise)
+        .where(Exercise.workout_id == workout.id)
+    )
+    sets_result = session.exec(sets_statement).all()
+    sets_by_id = {s.id: s for s, _ in sets_result}
+    sets_by_order = {(ex.order, s.order): s for s, ex in sets_result}
+
+    for result in results:
+        target_set: Optional[SetOfReps] = None
+        set_id = result.get("set_of_reps") or result.get("setOfReps")
+        if set_id:
+            try:
+                target_set = sets_by_id.get(int(set_id))
+            except (TypeError, ValueError):
+                target_set = None
+        else:
+            key = (result.get("exercise_order"), result.get("set_order"))
+            target_set = sets_by_order.get(key)
+
+        if target_set is None:
+            continue
+
+        entry_weight = (
+            result.get("weight")
+            or result.get("weight_actual")
+            or result.get("weightActual")
+        )
+        nb_actual = result.get("nb_reps_actual") or result.get("nbRepsActual")
+
+        weight_increased = entry_weight is not None and (
+            target_set.weight is None or float(entry_weight) > float(target_set.weight)
+        )
+        weight_unchanged = entry_weight is None or (
+            target_set.weight is not None
+            and float(entry_weight) == float(target_set.weight)
+        )
+
+        if weight_increased:
+            target_set.weight = entry_weight
+            if nb_actual is not None:
+                target_set.nb_reps = int(nb_actual)
+            session.add(target_set)
+        elif (
+            weight_unchanged
+            and nb_actual is not None
+            and int(nb_actual) > target_set.nb_reps
+        ):
+            target_set.nb_reps = int(nb_actual)
+            session.add(target_set)
 
 
 def get_workouts(user_id: int, session: Session) -> list[WorkoutListItem]:

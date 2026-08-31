@@ -14,6 +14,7 @@ from .schemas import (
     WorkoutLogListItem,
     WorkoutVolumeInsightsDetails,
     WorkoutUpdatePayload,
+    WorkoutResultPayload,
     WarmupSuggestionsResponse,
 )
 from .services import (
@@ -23,6 +24,7 @@ from .services import (
     last_workout_session,
     get_workout_logs,
     update_workout_from_payload,
+    workout_log_create,
 )
 from .warmup_suggestions_service import (
     WarmupSuggestionError,
@@ -207,3 +209,23 @@ def regenerate_warmup_suggestions(
         suggestions=suggestion.suggestions,
         generated_at=suggestion.generated_at,
     )
+
+
+@router.post("/results/", status_code=201)
+def submit_workout_results(
+    payload: WorkoutResultPayload,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: Session = Depends(get_session),
+):
+    try:
+        workout_log_create(
+            user_id=current_user.id,
+            workout_id=payload.workout_id,
+            results=payload.results,
+            session=session,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    session.commit()
+    return {"message": "Workout results saved."}
