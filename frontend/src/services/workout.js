@@ -16,7 +16,7 @@ export async function fetchWorkout(id) {
 }
 
 export async function submitWorkoutResults(payload) {
-  const { data } = await api.post('/api/workouts/results/', payload)
+  const { data } = await api.post('/workouts/results/', payload)
   return data
 }
 
