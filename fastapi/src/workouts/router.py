@@ -20,6 +20,7 @@ from .schemas import (
 )
 from .services import (
     compute_volume_insights,
+    create_workout_with_exercises,
     get_workouts,
     get_workout,
     last_workout_session,
@@ -48,6 +49,30 @@ def fetch_workouts(
     session: Session = Depends(get_session),
 ):
     return get_workouts(user_id=current_user.id, session=session)
+
+
+@router.post("/", response_model=WorkoutWithExercisesDetails, status_code=201)
+def create_workout(
+    payload: WorkoutPutPayload,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: Session = Depends(get_session),
+):
+    workout_data = {"name": payload.name, "description": payload.description}
+    exercises_data = [ex.model_dump() for ex in payload.exercises]
+
+    try:
+        workout = create_workout_with_exercises(
+            session=session,
+            user_id=current_user.id,
+            workout_data=workout_data,
+            exercises_data=exercises_data,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    session.commit()
+    session.refresh(workout)
+    return workout
 
 
 @router.get("/last-session/")
