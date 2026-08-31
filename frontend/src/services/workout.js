@@ -26,7 +26,7 @@ export async function createWorkout(payload) {
 }
 
 export async function updateWorkout(id, payload) {
-  const { data } = await api.put(`/api/workouts/${id}/`, payload)
+  const { data } = await api.put(`/workouts/${id}/`, payload)
   return data
 }
 

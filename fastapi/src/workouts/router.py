@@ -14,6 +14,7 @@ from .schemas import (
     WorkoutLogListItem,
     WorkoutVolumeInsightsDetails,
     WorkoutUpdatePayload,
+    WorkoutPutPayload,
     WorkoutResultPayload,
     WarmupSuggestionsResponse,
 )
@@ -104,6 +105,40 @@ def fetch_workout(
     if not w:
         raise HTTPException(status_code=404, detail="Workout not found.")
     return w
+
+
+@router.put("/{workout_id}/", response_model=WorkoutWithExercisesDetails)
+def replace_workout(
+    workout_id: int,
+    payload: WorkoutPutPayload,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session: Session = Depends(get_session),
+):
+    workout = get_workout(
+        user_id=current_user.id, workout_id=workout_id, session=session
+    )
+    if not workout:
+        raise HTTPException(status_code=404, detail="Workout not found.")
+
+    workout_data = {
+        "name": payload.name,
+        "description": payload.description,
+    }
+    exercises_data = [ex.model_dump() for ex in payload.exercises]
+
+    try:
+        updated = update_workout_from_payload(
+            session=session,
+            workout=workout,
+            workout_data=workout_data,
+            exercises_data=exercises_data,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+
+    session.commit()
+    session.refresh(updated)
+    return updated
 
 
 @router.patch("/{workout_id}/", response_model=WorkoutWithExercisesDetails)

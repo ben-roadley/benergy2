@@ -105,6 +105,12 @@ class WorkoutUpdatePayload(BaseModel):
     exercises: list[ExerciseWriteItem] | None = None
 
 
+class WorkoutPutPayload(BaseModel):
+    name: str
+    description: str | None = None
+    exercises: list[ExerciseWriteItem]
+
+
 class WorkoutResultPayload(BaseModel):
     workout_id: int
     # Permissive dict list — services normalise camelCase / snake_case keys.
