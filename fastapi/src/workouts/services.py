@@ -441,6 +441,7 @@ def apply_top_level_update(
         workout.name = workout_data["name"]
     if "description" in workout_data:
         workout.description = workout_data["description"]
+    workout.updated_at = datetime.datetime.now(datetime.timezone.utc)
     session.add(workout)
     return workout
 
@@ -484,6 +485,26 @@ def patch_existing_sets(
             if "weight" in s_payload:
                 set_obj.weight = s_payload["weight"]
             session.add(set_obj)
+
+
+def create_workout_with_exercises(
+    session: Session,
+    user_id: int,
+    workout_data: dict,
+    exercises_data: list[dict],
+) -> Workout:
+    """Create a Workout and its nested Exercise/SetOfReps rows from payload."""
+    if not exercises_data:
+        raise ValueError("A workout must have at least one exercise.")
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    workout = Workout(user_id=user_id, updated_at=now, **workout_data)
+    session.add(workout)
+    session.flush()
+
+    build_exercises(session=session, workout=workout, exercises_data=exercises_data)
+
+    return workout
 
 
 def update_workout_from_payload(
