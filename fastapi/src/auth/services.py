@@ -18,7 +18,7 @@ SECRET_KEY = os.getenv("FASTAPI_SECRET_KEY")
 ALGORITHM = os.getenv("FASTAPI_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("FASTAPI_ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token/")
 
 password_hash = PasswordHash.recommended()
 
@@ -55,8 +55,11 @@ def authenticate_user(username: str, password: str, session: Session):
     # This ensures the endpoint takes roughly the same amount of time to respond
     # whether the username is valid or not, preventing timing attacks that
     # could be used to enumerate existing usernames.
-    user = get_user(username, session)
-    if not user:
+    try:
+        user = get_user(username, session)
+    except ValueError:
+        user = None
+    if user is None:
         verify_password(password, DUMMY_HASH)
         return False
     if not verify_password(password, user.password):
@@ -81,8 +84,10 @@ async def get_current_user(
         token_data = TokenData(username=username)
     except jwt.InvalidTokenError:
         raise credentials_exception
-    user = get_user(username=token_data.username, session=session)
-    if user is None:
+
+    try:
+        user = get_user(username=token_data.username, session=session)
+    except ValueError:
         raise credentials_exception
     return user
 
@@ -99,5 +104,5 @@ async def check_token(token, session) -> dict:
     try:
         user = await get_current_user(token, session)
         return {"isAuthenticated": True, "user": User(**user.model_dump())}
-    except Exception as e:
+    except HTTPException:
         return {"isAuthenticated": False}

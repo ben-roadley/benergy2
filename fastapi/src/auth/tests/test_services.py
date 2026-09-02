@@ -139,3 +139,13 @@ def test_check_token_returns_unauthenticated_when_validation_fails(monkeypatch):
     assert asyncio.run(services.check_token("token", object())) == {
         "isAuthenticated": False
     }
+
+
+def test_check_token_propagates_unexpected_errors(monkeypatch):
+    async def get_current_user(token, session):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(services, "get_current_user", get_current_user)
+
+    with pytest.raises(RuntimeError, match="database unavailable"):
+        asyncio.run(services.check_token("token", object()))

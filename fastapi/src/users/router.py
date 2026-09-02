@@ -22,12 +22,12 @@ user_router = APIRouter(prefix="/users", tags=["users"])
 profile_router = APIRouter(prefix="/profile", tags=["profile"])
 
 
-@profile_router.get("/options", response_model=ProfileOptionsDetails)
+@profile_router.get("/options/", response_model=ProfileOptionsDetails)
 def fetch_profile_options():
     return get_profile_options()
 
 
-@profile_router.post("/clear", response_model=ProfileDetails)
+@profile_router.post("/clear/", response_model=ProfileDetails)
 def clear_profile_endpoint(
     current_user: Annotated[User, Depends(get_current_active_user)],
     session: Session = Depends(get_session),
@@ -50,11 +50,10 @@ def patch_profile_details(
     current_user: Annotated[User, Depends(get_current_active_user)],
     session: Session = Depends(get_session),
 ):
-    print(f"PATCH /profile with data: {profile.dict(exclude_unset=True)}")
     return update_profile(user_id=current_user.id, session=session, profile=profile)
 
 
-@user_router.get("/me", response_model=User)
+@user_router.get("/me/", response_model=User)
 async def fetch_users_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):

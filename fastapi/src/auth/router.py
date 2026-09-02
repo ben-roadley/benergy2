@@ -16,12 +16,12 @@ from .services import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token/")
 
 router = APIRouter(tags=["auth"])
 
 
-@router.post("/token")
+@router.post("/token/")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Session = Depends(get_session),
@@ -40,7 +40,7 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/session")
+@router.get("/session/")
 async def check_session(
     token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
 ) -> dict:
