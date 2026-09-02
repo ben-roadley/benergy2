@@ -23,6 +23,7 @@ from .services import (
     create_workout_with_exercises,
     get_workouts,
     get_workout,
+    get_workout_details,
     last_workout_session,
     get_workout_logs,
     update_workout_from_payload,
@@ -72,7 +73,7 @@ def create_workout(
 
     session.commit()
     session.refresh(workout)
-    return workout
+    return get_workout_details(workout, session)
 
 
 @router.get("/last-session/")
@@ -106,7 +107,7 @@ def fetch_workout_insights_volume(
     )
 
 
-@router.get("/{workout_id}/logs", response_model=list[WorkoutLogListItem])
+@router.get("/{workout_id}/logs/", response_model=list[WorkoutLogListItem])
 def fetch_workout_logs(
     workout_id: int,
     current_user: Annotated[User, Depends(get_current_active_user)],
@@ -129,7 +130,7 @@ def fetch_workout(
     w = get_workout(user_id=current_user.id, workout_id=workout_id, session=session)
     if not w:
         raise HTTPException(status_code=404, detail="Workout not found.")
-    return w
+    return get_workout_details(w, session)
 
 
 @router.put("/{workout_id}/", response_model=WorkoutWithExercisesDetails)
@@ -163,7 +164,7 @@ def replace_workout(
 
     session.commit()
     session.refresh(updated)
-    return updated
+    return get_workout_details(updated, session)
 
 
 @router.patch("/{workout_id}/", response_model=WorkoutWithExercisesDetails)
@@ -201,7 +202,7 @@ def update_workout(
 
     session.commit()
     session.refresh(updated)
-    return updated
+    return get_workout_details(updated, session)
 
 
 @router.get(
@@ -285,7 +286,8 @@ def submit_workout_results(
             session=session,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
+        status_code = 404 if str(exc).endswith("not found.") else 400
+        raise HTTPException(status_code=status_code, detail=str(exc))
 
     session.commit()
     return {"message": "Workout results saved."}

@@ -6,13 +6,13 @@ from ..catalog.models import CatalogExercisedefinition as ExerciseDefinition
 
 from .schemas import (
     WorkoutListItem,
+    WorkoutWithExercisesDetails,
     WorkoutLogListItem,
     WorkoutLogEntryListItem,
     WorkoutLogEntrySetListItem,
     WorkoutVolumeInsightsDetails,
+    WorkoutResultItem,
 )
-from ..database import engine
-
 from .models import WorkoutWorkout as Workout
 from .models import WorkoutWorkoutlog as WorkoutLog
 from .models import WorkoutWorkoutlogentry as WorkoutLogEntry
@@ -22,15 +22,13 @@ from .models import WorkoutWorkoutlog as WorkoutLog
 
 
 def workout_log_create(
-    user_id: int, workout_id: int, results: list[dict], session: Session
+    user_id: int, workout_id: int, results: list[WorkoutResultItem], session: Session
 ) -> WorkoutLog:
     """Create a WorkoutLog and WorkoutLogEntry rows from a results payload.
 
     The function is forgiving about payload key naming (camelCase or snake_case).
     """
-    workout = session.exec(
-        select(Workout).where(Workout.id == workout_id)
-    ).one_or_none()
+    workout = get_workout(user_id=user_id, workout_id=workout_id, session=session)
     if workout is None:
         raise ValueError(f"Workout {workout_id} not found.")
 
@@ -45,37 +43,36 @@ def workout_log_create(
         .where(Exercise.workout_id == workout.id)
     )
     sets_result = session.exec(sets_statement).all()
+    set_lookup_by_id = {set_of_reps.id: set_of_reps for set_of_reps, _ in sets_result}
     set_lookup_by_order = {
         (exercise.order, set_of_reps.order): set_of_reps.id
         for set_of_reps, exercise in sets_result
     }
 
+    resolved_sets = []
     for item in results:
-        set_of_reps_id = item.get("set_of_reps") or item.get("setOfReps")
-        if set_of_reps_id is None:
-            exercise_order = item.get("exercise_order") or item.get("exerciseOrder")
-            set_order = item.get("set_order") or item.get("setOrder")
-            if exercise_order is not None and set_order is not None:
-                set_of_reps_id = set_lookup_by_order.get((exercise_order, set_order))
+        if item.set_of_reps is not None:
+            target_set = set_lookup_by_id.get(item.set_of_reps)
+        else:
+            target_set_id = set_lookup_by_order.get(
+                (item.exercise_order, item.set_order)
+            )
+            target_set = set_lookup_by_id.get(target_set_id)
 
-        if not set_of_reps_id:
-            continue
-
-        nb_reps_target = item.get("nb_reps_target") or item.get("nbRepsTarget")
-        nb_reps_actual = item.get("nb_reps_actual") or item.get("nbRepsActual")
-        weight_actual = (
-            item.get("weight_actual") or item.get("weightActual") or item.get("weight")
-        )
-        weight_target = item.get("weight_target") or item.get("weightTarget")
+        if target_set is None:
+            raise ValueError("Workout result references an invalid set of reps.")
+        if target_set.id in {set_obj.id for set_obj in resolved_sets}:
+            raise ValueError("Workout results contain a duplicate set of reps.")
+        resolved_sets.append(target_set)
 
         session.add(
             WorkoutLogEntry(
                 log_id=log.id,
-                set_of_reps_id=set_of_reps_id,
-                nb_reps_target=nb_reps_target,
-                nb_reps_actual=nb_reps_actual,
-                weight_actual=weight_actual,
-                weight_target=weight_target,
+                set_of_reps_id=target_set.id,
+                nb_reps_target=item.nb_reps_target,
+                nb_reps_actual=item.nb_reps_actual,
+                weight_actual=item.weight_actual,
+                weight_target=item.weight_target,
             )
         )
 
@@ -84,7 +81,9 @@ def workout_log_create(
     return log
 
 
-def update_targets(session: Session, workout: Workout, results: list[dict]) -> None:
+def update_targets(
+    session: Session, workout: Workout, results: list[WorkoutResultItem]
+) -> None:
     """Update SetOfReps target weight/reps based on a batch of result entries."""
     sets_statement = (
         select(SetOfReps, Exercise)
@@ -96,26 +95,17 @@ def update_targets(session: Session, workout: Workout, results: list[dict]) -> N
     sets_by_order = {(ex.order, s.order): s for s, ex in sets_result}
 
     for result in results:
-        target_set: Optional[SetOfReps] = None
-        set_id = result.get("set_of_reps") or result.get("setOfReps")
-        if set_id:
-            try:
-                target_set = sets_by_id.get(int(set_id))
-            except (TypeError, ValueError):
-                target_set = None
+        if result.set_of_reps is not None:
+            target_set = sets_by_id.get(result.set_of_reps)
         else:
-            key = (result.get("exercise_order"), result.get("set_order"))
+            key = (result.exercise_order, result.set_order)
             target_set = sets_by_order.get(key)
 
         if target_set is None:
-            continue
+            raise ValueError("Workout result references an invalid set of reps.")
 
-        entry_weight = (
-            result.get("weight")
-            or result.get("weight_actual")
-            or result.get("weightActual")
-        )
-        nb_actual = result.get("nb_reps_actual") or result.get("nbRepsActual")
+        entry_weight = result.weight_actual
+        nb_actual = result.nb_reps_actual
 
         weight_increased = entry_weight is not None and (
             target_set.weight is None or float(entry_weight) > float(target_set.weight)
@@ -139,10 +129,35 @@ def update_targets(session: Session, workout: Workout, results: list[dict]) -> N
             session.add(target_set)
 
 
+def get_workout_list_item(workout: Workout, session: Session) -> WorkoutListItem:
+    return WorkoutListItem(
+        id=workout.id,
+        name=workout.name,
+        description=workout.description,
+        user=workout.user,
+        is_editable=is_workout_editable(workout=workout, session=session),
+        is_stagnating=is_workout_stagnating(workout=workout, session=session),
+    )
+
+
+def get_workout_details(
+    workout: Workout, session: Session
+) -> WorkoutWithExercisesDetails:
+    return WorkoutWithExercisesDetails(
+        id=workout.id,
+        name=workout.name,
+        description=workout.description,
+        user=workout.user,
+        exercises=workout.exercises,
+        is_editable=is_workout_editable(workout=workout, session=session),
+        is_stagnating=is_workout_stagnating(workout=workout, session=session),
+    )
+
+
 def get_workouts(user_id: int, session: Session) -> list[WorkoutListItem]:
     statement = select(Workout).where(Workout.user_id == user_id)
     results = session.exec(statement).all()
-    return [WorkoutListItem.model_validate(workout) for workout in results]
+    return [get_workout_list_item(workout, session) for workout in results]
 
 
 def get_workout(user_id: int, workout_id: int, session: Session) -> Optional[Workout]:
@@ -259,31 +274,30 @@ def group_log_entries_by_exercise(entries):
     return list(grouped.values())
 
 
-def is_workout_editable(workout: Workout = None) -> bool:
+def is_workout_editable(workout: Workout, session: Session) -> bool:
     """Return True when a workout has no training logs and can be edited."""
     if workout is None:
         raise ValueError("workout must be provided")
 
-    with Session(engine) as session:
-        statement = select(WorkoutLog).where(WorkoutLog.workout_id == workout.id)
-        logs = session.exec(statement).all()
-        return len(logs) == 0
+    statement = select(WorkoutLog).where(WorkoutLog.workout_id == workout.id)
+    logs = session.exec(statement).all()
+    return len(logs) == 0
 
 
-def is_workout_stagnating(workout: Workout = None) -> bool:
+def is_workout_stagnating(workout: Workout, session: Session) -> bool:
     """Return True when the last three workout logs have identical entry patterns."""
     if workout is None:
         raise ValueError("workout must be provided")
 
-    user_id = workout.user.id
-
-    with Session(engine) as session:
-        statement = (
-            select(WorkoutLog)
-            .where(WorkoutLog.user_id == user_id, WorkoutLog.workout_id == workout.id)
-            .order_by(WorkoutLog.completed_at.desc())
+    statement = (
+        select(WorkoutLog)
+        .where(
+            WorkoutLog.user_id == workout.user_id,
+            WorkoutLog.workout_id == workout.id,
         )
-        recent_logs = session.exec(statement).all()[:3]
+        .order_by(WorkoutLog.completed_at.desc())
+    )
+    recent_logs = session.exec(statement).all()[:3]
 
     if len(recent_logs) < 3:
         return False
@@ -432,7 +446,7 @@ def apply_top_level_update(
     """Update basic Workout fields and persist the instance."""
     if not workout_data:
         return workout
-    if not is_workout_editable(workout=workout):
+    if not is_workout_editable(workout=workout, session=session):
         raise ValueError(
             "Workout cannot be edited because training logs exist; "
             "only SetOfReps nb_reps/weight may be updated."
@@ -519,7 +533,7 @@ def update_workout_from_payload(
             session=session, workout=workout, workout_data=workout_data
         )
 
-    if is_workout_editable(workout=workout):
+    if is_workout_editable(workout=workout, session=session):
         apply_top_level_update(
             session=session, workout=workout, workout_data=workout_data
         )

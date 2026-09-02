@@ -15,7 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = localStorage.getItem(TOKEN_STORAGE_KEY)
       }
 
-      const { data } = await api.get('/session', {
+      const { data } = await api.get('/session/', {
           headers: {
             'Authorization': `Bearer ${token.value}`
           }})
@@ -30,12 +30,12 @@ export const useAuthStore = defineStore('auth', () => {
     formData.append("grant_type", "password"); // or "client_credentials"
     formData.append("username", username);
     formData.append("password", password);
-    const { data } = await api.post('/token', formData)
+    const { data } = await api.post('/token/', formData)
 
     token.value = data.access_token
     localStorage.setItem(TOKEN_STORAGE_KEY, token.value)
 
-    const userData = await api.get('/users/me')
+    const userData = await api.get('/users/me/')
     user.value = userData.data
   }
 

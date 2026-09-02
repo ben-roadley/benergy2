@@ -1,6 +1,13 @@
 import datetime
 
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    model_validator,
+)
 
 from ..catalog.schemas import CatalogExerciseDefinitionListItem
 from ..users.schemas import User
@@ -35,20 +42,8 @@ class WorkoutListItem(BaseModel):
     name: str
     description: str | None = None
     user: User
-
-    @computed_field
-    @property
-    def is_stagnating(self) -> bool:
-        from .services import is_workout_stagnating
-
-        return is_workout_stagnating(workout=self)
-
-    @computed_field
-    @property
-    def is_editable(self) -> bool:
-        from .services import is_workout_editable
-
-        return is_workout_editable(workout=self)
+    is_stagnating: bool = False
+    is_editable: bool = False
 
 
 class WorkoutWithExercisesDetails(WorkoutListItem):
@@ -111,10 +106,46 @@ class WorkoutPutPayload(BaseModel):
     exercises: list[ExerciseWriteItem]
 
 
+class WorkoutResultItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    set_of_reps: int | None = Field(
+        default=None, validation_alias=AliasChoices("set_of_reps", "setOfReps")
+    )
+    exercise_order: int | None = Field(
+        default=None, validation_alias=AliasChoices("exercise_order", "exerciseOrder")
+    )
+    set_order: int | None = Field(
+        default=None, validation_alias=AliasChoices("set_order", "setOrder")
+    )
+    nb_reps_target: int = Field(
+        validation_alias=AliasChoices("nb_reps_target", "nbRepsTarget"), ge=0
+    )
+    nb_reps_actual: int = Field(
+        validation_alias=AliasChoices("nb_reps_actual", "nbRepsActual"), ge=0
+    )
+    weight_actual: float | None = Field(
+        default=None,
+        validation_alias=AliasChoices("weight_actual", "weightActual", "weight"),
+    )
+    weight_target: float | None = Field(
+        default=None, validation_alias=AliasChoices("weight_target", "weightTarget")
+    )
+
+    @model_validator(mode="after")
+    def validate_reference(self):
+        if self.set_of_reps is None and (
+            self.exercise_order is None or self.set_order is None
+        ):
+            raise ValueError(
+                "Provide set_of_reps or both exercise_order and set_order."
+            )
+        return self
+
+
 class WorkoutResultPayload(BaseModel):
     workout_id: int
-    # Permissive dict list — services normalise camelCase / snake_case keys.
-    results: list[dict]
+    results: list[WorkoutResultItem]
 
 
 class WarmupSuggestionItem(BaseModel):

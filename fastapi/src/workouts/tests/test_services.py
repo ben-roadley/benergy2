@@ -8,6 +8,7 @@ from src.workouts.services import (
     get_workout,
     last_workout_session,
     get_workout_logs,
+    is_workout_editable,
     is_workout_stagnating,
 )
 from src.workouts.schemas import (
@@ -117,7 +118,7 @@ class TestGetWorkouts:
         assert len(results) == 1
         assert isinstance(results[0], WorkoutListItem)
         assert results[0].name == "Batman Training"
-        mock_session.exec.assert_called_once()
+        assert mock_session.exec.call_count == 3
 
     def test_get_workouts_empty(self, mock_session, sample_user):
         user_id = sample_user.id
@@ -262,58 +263,30 @@ class TestGetWorkoutLogs:
 
 
 class TestIsWorkoutStagnating:
-    def test_is_workout_stagnating_no_workout(self):
+    def test_is_workout_stagnating_no_workout(self, mock_session):
         with pytest.raises(ValueError, match="workout must be provided"):
-            is_workout_stagnating(workout=None)
+            is_workout_stagnating(workout=None, session=mock_session)
 
-    def test_is_workout_stagnating_insufficient_logs(self, sample_workout):
-        sample_workout.user = Mock()
-        sample_workout.user.id = 1
+    def test_is_workout_stagnating_insufficient_logs(
+        self, mock_session, sample_workout
+    ):
+        mock_session.exec.return_value.all.return_value = [Mock(), Mock()]
 
-        with patch("src.workouts.services.Session") as mock_session_class:
-            mock_session_instance = Mock()
-            mock_session_class.return_value.__enter__.return_value = (
-                mock_session_instance
-            )
-
-            mock_log1 = Mock()
-            mock_log2 = Mock()
-            mock_session_instance.exec.return_value.all.return_value = [
-                mock_log1,
-                mock_log2,
-            ]
-
-            result = is_workout_stagnating(workout=sample_workout)
-
+        result = is_workout_stagnating(workout=sample_workout, session=mock_session)
         assert result is False
 
-    def test_is_workout_stagnating_no_logs(self, sample_workout):
-        sample_workout.user = Mock()
-        sample_workout.user.id = 1
+    def test_is_workout_stagnating_no_logs(self, mock_session, sample_workout):
+        mock_session.exec.return_value.all.return_value = []
 
-        with patch("src.workouts.services.Session") as mock_session_class:
-            mock_session_instance = Mock()
-            mock_session_class.return_value.__enter__.return_value = (
-                mock_session_instance
-            )
-            mock_session_instance.exec.return_value.all.return_value = []
-
-            result = is_workout_stagnating(workout=sample_workout)
-
+        result = is_workout_stagnating(workout=sample_workout, session=mock_session)
         assert result is False
 
-    def test_is_workout_stagnating_requires_user(self, sample_workout):
-        sample_workout.user = Mock()
-        sample_workout.user.id = 42
+    def test_is_workout_stagnating_uses_provided_session(
+        self, mock_session, sample_workout
+    ):
+        mock_session.exec.return_value.all.return_value = []
 
-        with patch("src.workouts.services.Session") as mock_session_class:
-            mock_session_instance = Mock()
-            mock_session_class.return_value.__enter__.return_value = (
-                mock_session_instance
-            )
-            mock_session_instance.exec.return_value.all.return_value = []
+        result = is_workout_stagnating(workout=sample_workout, session=mock_session)
 
-            result = is_workout_stagnating(workout=sample_workout)
-
-        mock_session_instance.exec.assert_called()
+        mock_session.exec.assert_called()
         assert result is False
