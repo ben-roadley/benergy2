@@ -18,7 +18,6 @@ from .models import WorkoutWorkoutlog as WorkoutLog
 from .models import WorkoutWorkoutlogentry as WorkoutLogEntry
 from .models import WorkoutSetofreps as SetOfReps
 from .models import WorkoutExercise as Exercise
-from .models import WorkoutWorkoutlog as WorkoutLog
 
 
 def workout_log_create(
@@ -78,6 +77,7 @@ def workout_log_create(
 
     update_targets(session=session, workout=workout, results=results)
 
+    session.commit()
     return log
 
 
@@ -506,8 +506,8 @@ def create_workout_with_exercises(
     user_id: int,
     workout_data: dict,
     exercises_data: list[dict],
-) -> Workout:
-    """Create a Workout and its nested Exercise/SetOfReps rows from payload."""
+) -> WorkoutWithExercisesDetails:
+    """Create a Workout and its nested Exercise/SetOfReps rows, then return its full details."""
     if not exercises_data:
         raise ValueError("A workout must have at least one exercise.")
 
@@ -518,7 +518,9 @@ def create_workout_with_exercises(
 
     build_exercises(session=session, workout=workout, exercises_data=exercises_data)
 
-    return workout
+    session.commit()
+    session.refresh(workout)
+    return get_workout_details(workout, session)
 
 
 def update_workout_from_payload(
@@ -526,30 +528,32 @@ def update_workout_from_payload(
     workout: Workout,
     workout_data: dict,
     exercises_data: list[dict] | None,
-) -> Workout:
-    """Apply a validated payload to an existing Workout instance."""
+) -> WorkoutWithExercisesDetails:
+    """Apply a validated payload to a workout, persist it, and return its full details."""
     if exercises_data is None:
-        return apply_top_level_update(
+        apply_top_level_update(
             session=session, workout=workout, workout_data=workout_data
         )
-
-    if is_workout_editable(workout=workout, session=session):
+    elif is_workout_editable(workout=workout, session=session):
         apply_top_level_update(
             session=session, workout=workout, workout_data=workout_data
         )
         replace_all_exercises(
             session=session, workout=workout, exercises_data=exercises_data
         )
-        return workout
+    else:
+        ok, msg = validate_allowed_update(
+            session=session, workout=workout, exercises_data=exercises_data
+        )
+        if not ok:
+            raise ValueError(msg)
+        patch_existing_sets(
+            session=session, workout=workout, exercises_data=exercises_data
+        )
 
-    ok, msg = validate_allowed_update(
-        session=session, workout=workout, exercises_data=exercises_data
-    )
-    if not ok:
-        raise ValueError(msg)
-
-    patch_existing_sets(session=session, workout=workout, exercises_data=exercises_data)
-    return workout
+    session.commit()
+    session.refresh(workout)
+    return get_workout_details(workout, session)
 
 
 def compute_volume_insights(

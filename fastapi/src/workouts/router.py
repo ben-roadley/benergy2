@@ -35,12 +35,6 @@ from .warmup_suggestions_service import (
     force_regenerate_warmup_suggestions,
 )
 
-from .warmup_suggestions_service import (
-    WarmupSuggestionError,
-    get_or_generate_warmup_suggestions,
-    force_regenerate_warmup_suggestions,
-)
-
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
 
@@ -62,7 +56,7 @@ def create_workout(
     exercises_data = [ex.model_dump() for ex in payload.exercises]
 
     try:
-        workout = create_workout_with_exercises(
+        return create_workout_with_exercises(
             session=session,
             user_id=current_user.id,
             workout_data=workout_data,
@@ -70,10 +64,6 @@ def create_workout(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-
-    session.commit()
-    session.refresh(workout)
-    return get_workout_details(workout, session)
 
 
 @router.get("/last-session/")
@@ -99,6 +89,9 @@ def fetch_workout_insights_volume(
     workout = get_workout(
         user_id=current_user.id, workout_id=workout_id, session=session
     )
+    if not workout:
+        raise HTTPException(status_code=404, detail="Workout not found.")
+
     profile = get_or_create_profile(user_id=current_user.id, session=session)
     return compute_volume_insights(
         session=session,
@@ -153,7 +146,7 @@ def replace_workout(
     exercises_data = [ex.model_dump() for ex in payload.exercises]
 
     try:
-        updated = update_workout_from_payload(
+        return update_workout_from_payload(
             session=session,
             workout=workout,
             workout_data=workout_data,
@@ -161,10 +154,6 @@ def replace_workout(
         )
     except ValueError as exc:
         raise HTTPException(status_code=403, detail=str(exc))
-
-    session.commit()
-    session.refresh(updated)
-    return get_workout_details(updated, session)
 
 
 @router.patch("/{workout_id}/", response_model=WorkoutWithExercisesDetails)
@@ -191,7 +180,7 @@ def update_workout(
         exercises_data = [ex.model_dump() for ex in payload.exercises]
 
     try:
-        updated = update_workout_from_payload(
+        return update_workout_from_payload(
             session=session,
             workout=workout,
             workout_data=workout_data,
@@ -199,10 +188,6 @@ def update_workout(
         )
     except ValueError as exc:
         raise HTTPException(status_code=403, detail=str(exc))
-
-    session.commit()
-    session.refresh(updated)
-    return get_workout_details(updated, session)
 
 
 @router.get(
@@ -289,5 +274,4 @@ def submit_workout_results(
         status_code = 404 if str(exc).endswith("not found.") else 400
         raise HTTPException(status_code=status_code, detail=str(exc))
 
-    session.commit()
     return {"message": "Workout results saved."}
