@@ -47,8 +47,7 @@ def sample_user():
     user.last_name = "User"
     user.date_joined = datetime.datetime.now(datetime.timezone.utc)
     user.last_login = None
-    
-    # Mock the model_dump method
+
     user.model_dump.return_value = {
         "id": 1,
         "username": "testuser",
@@ -242,7 +241,9 @@ class TestClearProfile:
         mock_session.add.assert_not_called()
         mock_session.commit.assert_not_called()
 
-    def test_clear_profile_resets_all_optional_fields(self, mock_session, sample_profile):
+    def test_clear_profile_resets_all_optional_fields(
+        self, mock_session, sample_profile
+    ):
         """Test that all optional fields are properly reset."""
         # Arrange
         user_id = 1
