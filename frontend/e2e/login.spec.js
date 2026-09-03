@@ -26,7 +26,7 @@ test.describe('Login flow', () => {
     await page.locator('#password input').fill('wrongpass')
     await page.getByRole('button', { name: 'Login' }).click()
 
-    await expect(page.getByText('Invalid credentials')).toBeVisible()
+    await expect(page.getByText('Login failed.')).toBeVisible()
   })
 
   test('logs in successfully and redirects to home', async ({ page }) => {
