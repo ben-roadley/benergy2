@@ -26,8 +26,8 @@ The "live workout" experience starts from the workout chooser page, where the us
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| GET | `/api/workouts/{id}/` | Fetch full workout structure (exercises + sets) to initialise the session |
-| POST | `/api/workouts/results/` | Submit completed session; creates `WorkoutLog` + `WorkoutLogEntry` records and updates `SetOfReps` targets |
+| GET | `/workouts/{id}/` | Fetch full workout structure (exercises + sets) to initialise the session |
+| POST | `/workouts/results/` | Submit completed session; creates `WorkoutLog` + `WorkoutLogEntry` records and updates `SetOfReps` targets |
 
 ## Frontend
 

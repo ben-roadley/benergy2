@@ -21,11 +21,11 @@ No new models. This navigation layer reuses the existing workout, log, and profi
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| GET | `/api/workouts/` | Lists workouts for the manage and logs/insights hubs |
-| GET | `/api/workouts/{id}/` | Loads a workout for the editor |
-| POST | `/api/workouts/` | Creates a new workout from the editor |
-| GET | `/api/workouts/{id}/logs/` | Loads the training log history for a workout |
-| GET | `/api/workouts/{id}/insights/volume/` | Loads workout volume charts |
+| GET | `/workouts/` | Lists workouts for the manage and logs/insights hubs |
+| GET | `/workouts/{id}/` | Loads a workout for the editor |
+| POST | `/workouts/` | Creates a new workout from the editor |
+| GET | `/workouts/{id}/logs/` | Loads the training log history for a workout |
+| GET | `/workouts/{id}/insights/volume/` | Loads workout volume charts |
 
 ## Frontend
 

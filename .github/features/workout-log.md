@@ -5,7 +5,7 @@ Captures every completed workout session as a `WorkoutLog` with associated `Work
 
 ## User Flow
 
-1. **Implicit creation**: After the user completes a [Workout Session](workout-session.md), results are submitted via `POST /api/workouts/results/`. The backend creates a `WorkoutLog` and one `WorkoutLogEntry` per set.
+1. **Implicit creation**: After the user completes a [Workout Session](workout-session.md), results are submitted via `POST /workouts/results/`. The backend creates a `WorkoutLog` and one `WorkoutLogEntry` per set.
 2. **Immediate feedback**: The session's Complete Phase displays a grouped results table (actual vs. target reps/weight for every set) with colour coding.
 3. **Home launcher**: The home page includes a **Workout logs & insights** button that opens the logs and insights hub.
 4. **Hub list**: The logs and insights hub lists workouts. Each row has a clock icon that navigates to `/workouts/:id/logs` and a chart icon that navigates to `/workouts/:id/insights`.
@@ -23,9 +23,9 @@ Captures every completed workout session as a `WorkoutLog` with associated `Work
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| GET | `/api/workouts/` | Returns workout list; each item includes the computed `is_stagnating` boolean |
-| POST | `/api/workouts/results/` | Submits session results; creates `WorkoutLog` + `WorkoutLogEntry` records and updates `SetOfReps` targets |
-| GET | `/api/workouts/{id}/logs/` | Returns all completed sessions for a workout, ordered newest-first, with entries grouped by exercise |
+| GET | `/workouts/` | Returns workout list; each item includes the computed `is_stagnating` boolean |
+| POST | `/workouts/results/` | Submits session results; creates `WorkoutLog` + `WorkoutLogEntry` records and updates `SetOfReps` targets |
+| GET | `/workouts/{id}/logs/` | Returns all completed sessions for a workout, ordered newest-first, with entries grouped by exercise |
 
 ## Frontend
 
@@ -36,7 +36,7 @@ Captures every completed workout session as a `WorkoutLog` with associated `Work
 - **Training Logs page:** `frontend/src/components/WorkoutLogsView.vue` — fetches and renders all past sessions for a workout; manages its own local state (no Pinia store)
 - **Routes:** `/` (home launcher), `/workouts/start` (workout chooser), `/workout/:id` (session complete screen), `/workouts/logs-and-insights` (hub), `/workouts/:id/logs` (training logs history)
 - **Store (Pinia):** Not used by the logs page. `is_stagnating` is returned by the server in the workout list; session results live in `useWorkoutStore` during the session
-- **Services:** `submitWorkoutResults(payload)` and `fetchWorkoutLogs(id)` in `frontend/src/services/workout.js`; backend logic in `workout_log_create()` and `update_targets()` in `api/workout/services.py`
+- **Services:** `submitWorkoutResults(payload)` and `fetchWorkoutLogs(id)` in `frontend/src/services/workout.js`; backend logic in `workout_log_create()` and `update_targets()` in `fastapi/src/workouts/services.py`
 
 ## Business Rules
 

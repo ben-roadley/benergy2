@@ -10,7 +10,7 @@ Provides a visual analytics page for each workout, showing training volume (sets
 2. The browser navigates to `/workouts/logs-and-insights`.
 3. On the hub page, the user taps the **chart-line icon** next to a workout.
 4. The browser navigates to `/workouts/:id/insights`.
-5. The page loads and calls `GET /api/workouts/{id}/insights/volume/`.
+5. The page loads and calls `GET /workouts/{id}/insights/volume/`.
 6. An educational blurb ("What is training volume?") is shown at the top.
 7. If `bodyweight_kg` is `null` and any exercise is bodyweight-only, a prompt to set profile weight is displayed.
 8. If only one session has been logged, a banner encourages the user to log more sessions.
@@ -45,7 +45,7 @@ effective_weight =
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| GET | `/api/workouts/{id}/insights/volume/` | Returns aggregated volume data per session and per exercise for the given workout |
+| GET | `/workouts/{id}/insights/volume/` | Returns aggregated volume data per session and per exercise for the given workout |
 
 **Response shape:**
 ```json
@@ -71,7 +71,7 @@ effective_weight =
 - **Insights page:** `frontend/src/components/WorkoutInsightsView.vue` — manages its own local state (no Pinia store). Fetches on mount, renders loading/error/empty states and chart cards. Exercises are sorted by `order` client-side via a computed property.
 - **Home screen button:** `frontend/src/components/HomeView.vue` — `Workout logs & insights` button routes to the hub page
 - **Routes:** `/workouts/logs-and-insights` (`name: 'workout-logs-and-insights'`) and `/workouts/:id/insights` (`name: 'workout-insights'`) in `frontend/src/router/index.js`.
-- **Service:** `fetchWorkoutVolumeInsights(id)` in `frontend/src/services/workout.js` — `GET /api/workouts/{id}/insights/volume/`.
+- **Service:** `fetchWorkoutVolumeInsights(id)` in `frontend/src/services/workout.js` — `GET /workouts/{id}/insights/volume/`.
 - **Charting:** PrimeVue `<Chart type="line">` (Chart.js v4). `chart.js` is a direct frontend dependency. Chart options use `responsive: true, maintainAspectRatio: false` with a fixed-height wrapper (`height: 200px`) for correct mobile rendering.
 - **Pinia stores used:** none (page-local state only). Profile weight is supplied by the API response (`bodyweight_kg`) rather than fetched from `useProfileStore`.
 

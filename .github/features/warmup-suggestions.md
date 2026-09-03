@@ -16,7 +16,7 @@ During the warm-up phase of a workout session, the app displays 2–5 AI-generat
 
 ## Data Model
 
-### `WarmupSuggestion` (`api/workout/models.py`)
+### `WorkoutWarmupsuggestion` (`fastapi/src/workouts/models.py`)
 
 | Field | Type | Constraints |
 |-------|------|-------------|
@@ -31,8 +31,8 @@ One record per workout maximum (OneToOne). Created/updated via `update_or_create
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| GET | `/api/workouts/{id}/warmup-suggestions/` | Returns cached suggestions; regenerates automatically if exercise list has changed since last generation. Returns 503 if LLM call fails. |
-| POST | `/api/workouts/{id}/warmup-suggestions/` | Forces immediate LLM regeneration regardless of cache state. Returns 503 if LLM call fails. |
+| GET | `/workouts/{id}/warmup-suggestions/` | Returns cached suggestions; regenerates automatically if exercise list has changed since last generation. Returns 503 if LLM call fails. |
+| POST | `/workouts/{id}/warmup-suggestions/` | Forces immediate LLM regeneration regardless of cache state. Returns 503 if LLM call fails. |
 
 Both endpoints require authentication. Ownership is enforced by `WorkoutViewSet.get_queryset()` — requests for another user's workout return 404.
 
@@ -63,7 +63,7 @@ Both endpoints require authentication. Ownership is enforced by `WorkoutViewSet.
 
 ## Backend Service Layer
 
-`api/workout/warmup_suggestions_service.py` — isolated module (separately mockable in tests):
+`fastapi/src/workouts/warmup_suggestions_service.py` — isolated module (separately mockable in tests):
 
 | Function | Description |
 |----------|-------------|
@@ -77,7 +77,7 @@ Both endpoints require authentication. Ownership is enforced by `WorkoutViewSet.
 
 ## Configuration
 
-Three Django settings (all read from environment):
+Three settings (all read from environment):
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -106,15 +106,14 @@ Excluded: name, email, date of birth, weight, height, sex.
 
 ## Tests
 
-- `api/workout/tests/test_warmup_suggestions_service.py` — 23 unit tests covering all service functions; LLM is mocked via `unittest.mock.patch`.
-- `api/workout/tests/test_warmup_suggestions_api.py` — 10 API-level tests: auth enforcement, ownership, cache hit, cache miss, force regeneration, 503 on LLM failure.
+- `fastapi/src/workouts/tests/test_services.py` — service unit tests; LLM is mocked to avoid external API calls.
 - `frontend/src/stores/__tests__/warmupSuggestions.test.js` — 9 Vitest tests for the Pinia store.
 - `frontend/e2e/workout-session.spec.js` — 2 new Playwright tests: suggestions section is visible; section settles into list or error state within 10 s.
 
 ## Dependencies Added
 
-- `openai>=1.0,<2` added to `api/requirements/base.txt`.
-- Migration: `api/workout/migrations/0013_warmupsuggestion.py`.
+- OpenAI-compatible client dependency is declared in `fastapi/requirements.txt`.
+- The SQLModel mapping preserves the existing `workout_warmupsuggestion` table.
 
 ## Known Limitations / TODOs
 

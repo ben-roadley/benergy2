@@ -290,6 +290,21 @@ class TestGetOrCreateProfile:
         mock_session.add.assert_not_called()
         mock_session.commit.assert_not_called()
 
+    def test_create_profile_when_missing(self, mock_session, monkeypatch):
+        mock_session.exec.return_value.first.return_value = None
+        monkeypatch.setattr(
+            "src.users.services.ProfileDetails.model_validate",
+            lambda profile: "created profile",
+        )
+
+        result = get_or_create_profile(7, mock_session)
+
+        assert result == "created profile"
+        mock_session.add.assert_called_once()
+        assert mock_session.add.call_args.args[0].user_id == 7
+        mock_session.commit.assert_called_once()
+        mock_session.refresh.assert_called_once()
+
     def test_get_or_create_profile_calls_model_validate(
         self, mock_session, sample_profile
     ):

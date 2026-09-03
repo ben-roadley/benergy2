@@ -27,14 +27,14 @@ Allows users to create new workouts or edit existing ones. A workout is a named 
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| GET | `/api/workouts/` | List all workouts for the authenticated user; includes `is_stagnating` and `is_editable` flags |
-| POST | `/api/workouts/` | Create a new workout with nested exercises and sets |
-| GET | `/api/workouts/{id}/` | Retrieve a single workout with full exercise and set details |
-| PUT | `/api/workouts/{id}/` | Full replacement of the workout and all nested exercises/sets (only allowed if `is_editable`) |
-| PATCH | `/api/workouts/{id}/` | Partial update; if the workout has logs, only `SetOfReps` fields (`nb_reps`, `weight`) are accepted |
-| GET | `/api/exercise-definitions/?q=<query>` | Search the exercise catalog; requires ≥ 2 chars; returns max 30 results |
+| GET | `/workouts/` | List all workouts for the authenticated user; includes `is_stagnating` and `is_editable` flags |
+| POST | `/workouts/` | Create a new workout with nested exercises and sets |
+| GET | `/workouts/{id}/` | Retrieve a single workout with full exercise and set details |
+| PUT | `/workouts/{id}/` | Full replacement of the workout and all nested exercises/sets (only allowed if `is_editable`) |
+| PATCH | `/workouts/{id}/` | Partial update; if the workout has logs, only `SetOfReps` fields (`nb_reps`, `weight`) are accepted |
+| GET | `/exercise-definitions/?q=<query>` | Search the exercise catalog; requires ≥ 2 chars; returns max 30 results |
 
-### Exercise read shape (inside `GET /api/workouts/{id}/`)
+### Exercise read shape (inside `GET /workouts/{id}/`)
 
 ```json
 {
@@ -53,7 +53,7 @@ Allows users to create new workouts or edit existing ones. A workout is a named 
 }
 ```
 
-### Exercise write shape (inside `POST/PUT /api/workouts/`)
+### Exercise write shape (inside `POST/PUT /workouts/`)
 
 ```json
 {
