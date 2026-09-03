@@ -25,7 +25,7 @@ test.describe('Workout Editor', () => {
 
   // ---- Create ----
 
-  test('creates a new workout and shows it on the home page', async ({ page }) => {
+  test('creates a new workout and shows it on the management page', async ({ page }) => {
     const name = `E2E Create ${Date.now()}`
 
     // Navigate directly — the "Create new workout" button only appears when workouts already exist
@@ -38,7 +38,7 @@ test.describe('Workout Editor', () => {
 
     await page.getByRole('button', { name: 'Create Workout' }).click()
 
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/workouts/manage')
   })
 
   // ---- Validation ----
@@ -74,7 +74,7 @@ test.describe('Workout Editor', () => {
     // Search and select an exercise from catalog
     await selectExercise(page, 'Bodyweight Squat')
     await page.getByRole('button', { name: 'Create Workout' }).click()
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/workouts/manage')
 
     // Go to management page and open the workout for editing
     await page.goto('/workouts/manage')
@@ -97,7 +97,7 @@ test.describe('Workout Editor', () => {
     // Search and select an exercise from catalog
     await selectExercise(page, 'Barbell Lunge')
     await page.getByRole('button', { name: 'Create Workout' }).click()
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/workouts/manage')
     await page.goto('/workouts/manage')
 
     // Open for editing
@@ -110,7 +110,7 @@ test.describe('Workout Editor', () => {
     await page.locator('#workout-name').fill(updatedName)
     await page.getByRole('button', { name: 'Save Changes' }).click()
 
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/workouts/manage')
     await page.goto('/workouts/manage')
     await expect(page.getByRole('button', { name: updatedName })).toBeVisible()
   })

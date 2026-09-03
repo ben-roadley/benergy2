@@ -36,7 +36,7 @@ describe('useProfileStore', () => {
       const store = useProfileStore()
       await store.fetchProfile()
 
-      expect(api.get).toHaveBeenCalledWith('/api/profile/')
+      expect(api.get).toHaveBeenCalledWith('/profile/')
       expect(store.profile).toEqual(mockProfile)
       expect(store.loading).toBe(false)
     })
@@ -63,7 +63,7 @@ describe('useProfileStore', () => {
       const store = useProfileStore()
       await store.fetchOptions()
 
-      expect(api.get).toHaveBeenCalledWith('/api/profile/options/')
+      expect(api.get).toHaveBeenCalledWith('/profile/options/')
       expect(store.options).toEqual(mockOptions)
     })
   })
@@ -80,7 +80,7 @@ describe('useProfileStore', () => {
 
       await store.saveProfile({ display_name: 'Benjamin' })
 
-      expect(api.patch).toHaveBeenCalledWith('/api/profile/', { display_name: 'Benjamin' })
+      expect(api.patch).toHaveBeenCalledWith('/profile/', { display_name: 'Benjamin' })
       expect(store.profile).toEqual(updatedProfile)
       expect(authStore.user.display_name).toBe('Benjamin')
       expect(store.loading).toBe(false)
@@ -110,7 +110,7 @@ describe('useProfileStore', () => {
 
       await store.clearProfile()
 
-      expect(api.post).toHaveBeenCalledWith('/api/profile/clear/')
+      expect(api.post).toHaveBeenCalledWith('/profile/clear/')
       expect(store.profile).toEqual(clearedProfile)
       expect(authStore.user.display_name).toBe('')
       expect(store.loading).toBe(false)
