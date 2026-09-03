@@ -14,11 +14,16 @@ Main features:
 - Workout Insights: volume-over-time charts (sets × reps × weight) per exercise and as a global total, with bodyweight fallback from user profile
 
 Tech stack:
-- REST API backend (Django) and Vite frontend (Vue)
+
+- REST API backend (FastAPI with SQLModel) and Vite frontend (Vue)
 - LLM integration via OpenAI-compatible SDK
 - Container-first dev workflow with `Taskfile.yml` wrappers
 
-=> This is a small, container-first monorepo: a Django REST API (`api/`) and a Vite frontend (`frontend/`). Built for local development with `Taskfile.yml` wrappers and Docker Compose. 🧰🚀
+=> This is a small, container-first monorepo: a FastAPI backend (`fastapi/`) and a Vite frontend (`frontend/`). Built for local development with `Taskfile.yml` wrappers and Docker Compose. 🧰🚀
+
+**Backend refactor**
+
+The backend has been rewritten from Django REST Framework to FastAPI. FastAPI provides automatic OpenAPI documentation, Pydantic request and response validation, and a smaller modular service structure while preserving the existing PostgreSQL data model and frontend API surface. The legacy Django implementation remains in `api/` temporarily as a rollback reference; production Compose wiring will be switched to FastAPI before deployment.
 
 **Why this repo**
 - Personal home training app (API + frontend) used for development and Raspberry Pi deploys.
@@ -33,17 +38,19 @@ task b:shell           # open a shell in the backend container
 task f:shell           # open a shell in the frontend container
 ```
 
-To get the backend up and running with test data:
+To get the development stack running:
 
 ```bash
-task b:manage -- migrate                        # (necessary) django migrate command
-task b:manage -- createsuperuser                # (necessary) django create a super user
-task b:manage -- import_exercise_definitions    # imports all exercise definitions in the database
-task b:manage -- init_db                        # create a test user with workout and simulated session history
+task up
+```
+
+The FastAPI service is available at `http://localhost:8888`. Interactive OpenAPI documentation is available at `http://localhost:8888/docs`.
+
+The legacy Django service is still started on port 8000 during the transition, but it is no longer the target backend.
 
 Notes:
-- Do NOT run `python manage.py` on the host. Use `task b:manage` or `task b:shell` to run management commands inside the backend container.
 - Use `.env.dev` for development and `.env.prod` for production.
+- The FastAPI container is named `fastapi` and runs `uvicorn src.main:app`.
 
 **Frontend (local dev)**
 - If you prefer running frontend tools locally, use the `task` wrappers:
@@ -54,12 +61,15 @@ task f:dev
 ```
 
 **Backend (tests & maintenance)**
-- Run backend tests and linters inside containers with `task b:test` and `task b:lint`.
+- Run FastAPI tests and linting through the Taskfile:
 
 ```bash
 task b:test
+task b:coverage
 task b:lint
 ```
+
+These commands run inside the `fastapi` container. Django-only management commands are no longer exposed through the Taskfile.
 
 **Docker / Production**
 - Use `docker-compose.yml` for development and `docker-compose.prod.yml` for production. Prefer the `task` build/deploy tasks when available (`Taskfile.yml`).
@@ -70,13 +80,14 @@ task prod:deploy      # deploy latest images in production
 ```
 
 **Project layout (high level)**
-- `api/` — Django backend, `manage.py`, tests, Dockerfiles
+- `fastapi/` — FastAPI backend, SQLModel models, routers, services, schemas, tests, and Dockerfile
+- `api/` — temporary legacy Django backend retained during the migration period
 - `frontend/` — Vite + Vue app, `package.json`, e2e tests
 - `nginx/` — reverse-proxy
 - `Taskfile.yml` — canonical developer commands (use `task`)
 
 **Contributing**
-- Open an issue or PR. Run `task b:lint`, `task b:test`, and `task f:test` before opening PRs. Keep changes small and add tests for new behavior.
+- Open an issue or PR. Run the FastAPI container tests and `task f:test` before opening PRs. Keep changes small and add tests for new behavior.
 
 **License & contact**
 - This project is licensed under the MIT License. See the `LICENSE` file for details.

@@ -28,9 +28,9 @@ Keep the following facts in mind. Use the `search` and `read` tools to verify or
 
 ### Tech Stack (DevOps-relevant)
 - **Orchestration:** Docker Compose — `docker-compose.yml` (dev), `docker-compose.prod.yml` (prod)
-- **Services:** `web` (Django API), `frontend` (Vue/Nginx static), `nginx` (reverse proxy)
+- **Services:** `fastapi` (active API in development), `web` (temporary legacy Django API), `frontend` (Vue/Nginx static), `nginx` (reverse proxy)
 - **Production images:** Multi-arch builds (`linux/arm64` for Raspberry Pi, `linux/amd64` for CI runners). Built and pushed via Taskfile tasks.
-- **Task runner:** `Taskfile.yml` — the **single source of truth** for all dev, build, and deploy commands. Always prefer `task <name>` over raw docker/npm commands.
+- **Task runner:** `Taskfile.yml` — the **single source of truth** for all dev, build, and deploy commands. Development backend tasks target `fastapi`; always prefer `task <name>` over raw docker/npm commands.
 - **Environment files:** `.env.dev` (development), `.env.prod` (production), `.env.gitlab-ci` (build pipeline)
 
 ### GitHub Actions Workflows
@@ -92,7 +92,7 @@ Keep the following facts in mind. Use the `search` and `read` tools to verify or
 ## Constraints
 
 ### Prohibited Actions
-1. **DO NOT** modify application code (Django, Vue, Python, JavaScript) — that is the responsibility of the Backend Developer and Frontend Developer agents
+1. **DO NOT** modify application code (FastAPI, Django legacy code, Vue, Python, JavaScript) — that is the responsibility of the Backend Developer and Frontend Developer agents
 2. **DO NOT** run destructive commands (e.g., `docker system prune -af`, `git reset --hard`, `git push --force`) without explicit user confirmation
 3. **DO NOT** suggest storing secrets in workflow files, `.env` files committed to git, or image layers
 

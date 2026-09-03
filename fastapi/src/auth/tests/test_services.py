@@ -21,9 +21,15 @@ def make_user(is_active=True):
 
 
 def test_verify_password_removes_legacy_django_argon2_prefix(monkeypatch):
-    verify = monkeypatch.setattr(services.password_hash, "verify", lambda *args: True)
+    monkeypatch.setattr(services.password_hash, "verify", lambda *args: True)
 
     assert services.verify_password("secret", "argon2$argon2id$hash") is True
+
+
+def test_verify_password_accepts_current_hash_without_prefix(monkeypatch):
+    monkeypatch.setattr(services.password_hash, "verify", lambda *args: True)
+
+    assert services.verify_password("secret", "$argon2id$hash") is True
 
 
 def test_get_password_hash_delegates_to_password_hasher(monkeypatch):
@@ -46,9 +52,36 @@ def test_create_access_token_contains_subject_and_expiry(monkeypatch):
     assert payload["exp"] > payload["iat"] if "iat" in payload else payload["exp"] > 0
 
 
+def test_create_access_token_uses_default_expiry(monkeypatch):
+    monkeypatch.setattr(services, "SECRET_KEY", "test-secret")
+
+    token = services.create_access_token({"sub": "bruce"})
+
+    payload = jwt.decode(token, "test-secret", algorithms=[services.ALGORITHM])
+    assert payload["sub"] == "bruce"
+    assert payload["exp"] > 0
+
+
 def test_authenticate_user_uses_dummy_hash_for_unknown_username(monkeypatch):
     verified = []
     monkeypatch.setattr(services, "get_user", lambda username, session: None)
+    monkeypatch.setattr(
+        services,
+        "verify_password",
+        lambda password, hashed_password: verified.append((password, hashed_password)),
+    )
+
+    assert services.authenticate_user("missing", "secret", object()) is False
+    assert verified == [("secret", services.DUMMY_HASH)]
+
+
+def test_authenticate_user_uses_dummy_hash_when_lookup_raises(monkeypatch):
+    verified = []
+
+    def get_user_that_raises(username, session):
+        raise ValueError("not found")
+
+    monkeypatch.setattr(services, "get_user", get_user_that_raises)
     monkeypatch.setattr(
         services,
         "verify_password",
@@ -109,11 +142,32 @@ def test_get_current_user_rejects_invalid_token(monkeypatch):
     assert exception.value.status_code == 401
 
 
+def test_get_current_user_rejects_unknown_user(monkeypatch):
+    monkeypatch.setattr(services, "SECRET_KEY", "test-secret")
+
+    def get_user_that_raises(username, session):
+        raise ValueError("not found")
+
+    monkeypatch.setattr(services, "get_user", get_user_that_raises)
+    token = jwt.encode({"sub": "missing"}, "test-secret", algorithm=services.ALGORITHM)
+
+    with pytest.raises(HTTPException) as exception:
+        asyncio.run(services.get_current_user(token, object()))
+
+    assert exception.value.status_code == 401
+
+
 def test_get_current_active_user_rejects_inactive_user():
     with pytest.raises(HTTPException) as exception:
         asyncio.run(services.get_current_active_user(make_user(is_active=False)))
 
     assert exception.value.status_code == 400
+
+
+def test_get_current_active_user_returns_active_user():
+    user = make_user()
+
+    assert asyncio.run(services.get_current_active_user(user)) == user
 
 
 def test_check_token_returns_authentication_state(monkeypatch):

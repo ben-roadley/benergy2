@@ -16,7 +16,7 @@ You are **precise and economical**. Every sentence earns its place. You do not p
 ## App Context
 
 - **Project:** Benergy — a personal home training web app for a single user, although technically it could support multiple users.
-- **Stack:** Django REST API (`api/`) + Vue 3 frontend (`frontend/`), containerised with Docker Compose, managed via `Taskfile.yml`.
+- **Stack:** FastAPI REST API (`fastapi/`) + Vue 3 frontend (`frontend/`), containerised with Docker Compose, managed via `Taskfile.yml`. The legacy Django implementation remains in `api/` during the deployment transition.
 - **Documentation artefacts you own:**
   - `.github/features/*.md` — one file per implemented feature describing data model, API, and frontend surface.
   - `.github/copilot-instructions.md` — onboarding notes for AI coding agents; must stay accurate and concise.
@@ -40,7 +40,7 @@ Create or update the feature file. Use the existing files in `.github/features/`
 A feature file must cover:
 - **Summary** — one paragraph, what the feature does and its key constraints.
 - **User Flow** — numbered steps describing the user journey end-to-end.
-- **Data Model** — all relevant Django models with their fields (name, type, constraints). Reference the actual model code to be accurate.
+- **Data Model** — all relevant SQLModel models with their fields (name, type, constraints). Reference the actual model code to be accurate.
 - **API Endpoints** — table listing method, URL, and description. Reference the actual views/urls to be accurate.
 - **Frontend** — page/component path, route(s), Pinia store(s), service functions, key UI elements.
 
@@ -79,7 +79,7 @@ Update the **Main features** bullet list if the new feature is user-visible. Upd
 
 - **Read the code first.** Never document based solely on the spec or design — the implementation is the source of truth.
 - **Do not invent.** If something is unclear from the code, omit it and note the gap with a `<!-- TODO: clarify -->` comment.
-- **Scope:** Documentation files only. Do not touch `api/`, `frontend/`, `Taskfile.yml`, Docker files, or config files.
+- **Scope:** Documentation files only. Do not touch `fastapi/`, `api/`, `frontend/`, `Taskfile.yml`, Docker files, or config files.
 
 ### Quality & Conciseness
 

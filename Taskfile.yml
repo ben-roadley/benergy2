@@ -5,7 +5,7 @@ vars:
   COMPOSE_FILES: -f docker-compose.yml
   COMPOSE_FILES_PROD: --env-file .env.prod -f docker-compose.prod.yml
 
-  BACK: web
+  BACK: fastapi
   FRONT: frontend
   PROXY: nginx
   BACK_PROD: web
@@ -54,9 +54,11 @@ tasks:
         echo "  task sh:           - Shell into any service (usage: task sh -- frontend)"
         echo "  task up:           - Start the whole stack (detached)"
         echo ""
-        echo "Backend (Django) commands:"
-        echo "  task b:manage:   - Run manage.py commands (usage: task be:manage -- shell)"
-        echo "  task b:test:     - Run Django tests"
+        echo "Backend (FastAPI) commands:"
+        echo "  task b:shell:    - Open a shell in the FastAPI container"
+        echo "  task b:test:     - Run FastAPI tests"
+        echo "  task b:coverage: - Require 100% coverage for FastAPI service modules"
+        echo "  task b:lint:     - Run FastAPI linters"
         echo ""
         echo "Frontend (Vue) commands:"
         echo "  task f:install:    - Install npm deps (inside container)"
@@ -112,40 +114,34 @@ tasks:
 
 
   # --------------------
-  # Backend (Django)
+  # Backend (FastAPI)
   # --------------------
   b:shell:
-    desc: Interactive shell inside web/api container
+    desc: Interactive shell inside the FastAPI container
     dotenv: *DEV_DOTENV
     interactive: true
     cmds:
       - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} bash"
 
-  b:manage:
-    desc: "Run manage.py commands (usage: task be:manage -- shell)"
-    dotenv: *DEV_DOTENV
-    cmds:
-      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} python manage.py {{.CLI_ARGS}}"
-
   b:test:
-    desc: Run Django tests
+    desc: Run FastAPI tests
     dotenv: *DEV_DOTENV
     cmds:
       - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} python -m pytest . {{.CLI_ARGS}}"
 
   b:coverage:
-    desc: Run Django tests and enforce 100% coverage (fails if below 100%)
+    desc: Run FastAPI tests and enforce 100% coverage (fails if below 100%)
     dotenv: *DEV_DOTENV
     cmds:
-      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} python -m pytest . --cov-fail-under=100 {{.CLI_ARGS}}"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} python -m pytest --cov-fail-under=100 {{.CLI_ARGS}}"
 
   b:lint:
-    desc: Run linters (isort, black, flake8)
+    desc: Run FastAPI linters (isort, black, flake8)
     dotenv: *DEV_DOTENV
     cmds:
-      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'isort /usr/src/api'"
-      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'black /usr/src/api'"
-      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'flake8 /usr/src/api'"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'isort /usr/src/fastapi'"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'black /usr/src/fastapi'"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'flake8 /usr/src/fastapi'"
 
 
   # --------------------
@@ -220,7 +216,7 @@ tasks:
       - |
         echo "Access the frontend at: http://localhost:$FRONTEND_PORT"
       - |
-        echo "Access the DRF Browsable API at: http://localhost:$BACKEND_PORT/api/"
+        echo "Access the FastAPI docs at: http://localhost:8888/docs"
     silent: true
     
   f:chrome:
@@ -420,12 +416,6 @@ tasks:
     interactive: true
     cmds:
       - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec {{.BACK_PROD}} bash"
-
-  prod:b:manage:
-    desc: "Run manage.py in production (usage: task prod:b:manage -- shell)"
-    dotenv: *PROD_DOTENV
-    cmds:
-      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec {{.BACK_PROD}} python manage.py {{.CLI_ARGS}}"
 
   # Nginx prod tasks
   prod:proxy:reload:

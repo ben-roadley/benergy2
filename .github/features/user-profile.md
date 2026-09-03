@@ -6,10 +6,10 @@ Each authenticated user has a single `UserProfile` record (created on first acce
 ## User Flow
 
 1. The user clicks their name in the app header — it navigates to `/profile`.
-2. On mount, the profile form fetches the current profile (`GET /api/profile/`) and the valid options for all choice fields (`GET /api/profile/options/`). A blank profile is auto-created on the backend if one does not yet exist.
+2. On mount, the profile form fetches the current profile (`GET /profile/`) and the valid options for all choice fields (`GET /profile/options/`). A blank profile is auto-created on the backend if one does not yet exist.
 3. The user fills in any combination of the 14 fields across three sections (About you / Your training / Your lifestyle) and clicks **Save profile**.
-4. A `PATCH /api/profile/` request is sent with only the form payload. On success, a Toast confirms the save and `authStore.user.display_name` is updated in-place (no extra session call). On failure, a Toast and an inline `Message` show the parsed field-level errors from the backend.
-5. Optionally, the user clicks **Clear all profile data**. A `ConfirmDialog` prompts for confirmation, then `POST /api/profile/clear/` resets all fields to defaults and clears `display_name` in the auth store.
+4. A `PATCH /profile/` request is sent with only the form payload. On success, a Toast confirms the save and `authStore.user.display_name` is updated in-place (no extra session call). On failure, a Toast and an inline `Message` show the parsed field-level errors from the backend.
+5. Optionally, the user clicks **Clear all profile data**. A `ConfirmDialog` prompts for confirmation, then `POST /profile/clear/` resets all fields to defaults and clears `display_name` in the auth store.
 6. After saving a display name, the header and home page welcome message reflect the new name immediately.
 
 ## Data Model
@@ -35,7 +35,7 @@ Each authenticated user has a single `UserProfile` record (created on first acce
 | `sleep_quality` | CharField(10) | choices: `SleepQualityChoices`; blank, default `''` |
 | `stress_level` | CharField(10) | choices: `StressLevelChoices`; blank, default `''` |
 
-**Choice enums** (defined in `api/users/models.py`):
+**Choice enums** (defined in `fastapi/src/users/schemas.py`):
 - `SexChoices`: `male`, `female`, `prefer_not_to_say`
 - `FitnessLevelChoices`: `beginner`, `intermediate`, `advanced`, `athlete`
 - `SessionDurationChoices`: `20_30`, `30_45`, `45_60`, `60_plus`
@@ -50,14 +50,14 @@ Each authenticated user has a single `UserProfile` record (created on first acce
 
 | Method | URL | Description |
 |---|---|---|
-| GET | `/api/profile/` | Return the authenticated user's profile; auto-creates a blank one if absent |
-| PATCH | `/api/profile/` | Partially update the profile; only supplied fields are changed |
-| POST | `/api/profile/clear/` | Reset all optional fields to defaults (None / `''` / `[]`) |
-| GET | `/api/profile/options/` | Return all valid values for every choice/multi-select field |
+| GET | `/profile/` | Return the authenticated user's profile; auto-creates a blank one if absent |
+| PATCH | `/profile/` | Partially update the profile; only supplied fields are changed |
+| POST | `/profile/clear/` | Reset all optional fields to defaults (None / `''` / `[]`) |
+| GET | `/profile/options/` | Return all valid values for every choice/multi-select field |
 
-All four endpoints require authentication. Unauthenticated requests receive HTTP 403 (DRF `SessionAuthentication` behaviour).
+All four endpoints require authentication through the FastAPI bearer-token dependency. Unauthenticated requests receive HTTP 401.
 
-The session endpoint (`GET /api/auth/session/`) also returns `display_name` inside the `user` object so the UI can display it without an extra profile fetch.
+The session endpoint (`GET /session/`) also returns the authenticated user so the UI can display it without an extra profile fetch.
 
 ## Frontend
 
@@ -80,11 +80,8 @@ The session endpoint (`GET /api/auth/session/`) also returns `display_name` insi
 
 | File | Role |
 |---|---|
-| `api/users/models.py` | `UserProfile` model, all `TextChoices` classes, `VALID_GOALS`, `VALID_EQUIPMENT` |
-| `api/users/migrations/0001_initial.py` | Schema migration creating `users_userprofile` |
-| `api/users/services.py` | `get_or_create_profile`, `update_profile`, `clear_profile` |
-| `api/users/serializers.py` | `UserProfileSerializer` with field validators |
-| `api/users/profile_views.py` | `profile_view`, `profile_clear_view`, `profile_options_view` |
-| `api/users/auth_views.py` | `_user_data()` — exposes `display_name` on the session endpoint |
-| `api/users/tests/test_services.py` | 11 service unit tests |
-| `api/users/tests/test_api.py` | 22 API tests |
+| `fastapi/src/users/models.py` | `AuthUser` and `UsersUserprofile` SQLModel table mappings |
+| `fastapi/src/users/schemas.py` | Profile request/response schemas and choice enums |
+| `fastapi/src/users/services.py` | `get_or_create_profile`, `update_profile`, `clear_profile` |
+| `fastapi/src/users/router.py` | Profile and current-user endpoints |
+| `fastapi/src/users/tests/test_services.py` | Profile service unit tests |
