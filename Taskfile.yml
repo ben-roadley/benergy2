@@ -250,12 +250,15 @@ tasks:
     vars:
       PLATFORM: linux/amd64
       WEB_DOCKER_IMAGE_TAG: web_amd64
+      FASTAPI_DOCKER_IMAGE_TAG: fastapi_amd64
       NGINX_DOCKER_IMAGE_TAG: nginx_amd64
       FRONTEND_DOCKER_IMAGE_TAG: frontend_amd64
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}  -f api/Dockerfile.prod api
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}} -f fastapi/Dockerfile.prod fastapi
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
@@ -275,6 +278,19 @@ tasks:
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
       - |
         echo "✅ build:web-amd64 complete!"
+
+  build:fastapi-amd64:
+    desc: Build FastAPI production image for AMD64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/amd64
+      FASTAPI_DOCKER_IMAGE_TAG: fastapi_amd64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}} -f fastapi/Dockerfile.prod fastapi
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:fastapi-amd64 complete!"
         
   build:frontend-amd64:
     desc: Build frontend production image for AMD64 and push to registry
@@ -308,12 +324,15 @@ tasks:
     vars:
       PLATFORM: linux/arm64/v8
       WEB_DOCKER_IMAGE_TAG: web_arm64
+      FASTAPI_DOCKER_IMAGE_TAG: fastapi_arm64
       NGINX_DOCKER_IMAGE_TAG: nginx_arm64
       FRONTEND_DOCKER_IMAGE_TAG: frontend_arm64
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}} -f api/Dockerfile.prod api
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}} -f fastapi/Dockerfile.prod fastapi
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
@@ -329,6 +348,7 @@ tasks:
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:web-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:web-latest -f api/Dockerfile.prod --push api
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:fastapi-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:fastapi-latest -f fastapi/Dockerfile.prod --push fastapi
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:nginx-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:nginx-latest -f nginx/Dockerfile --push nginx
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:frontend-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:frontend-latest -f frontend/Dockerfile.prod --push frontend
 
@@ -347,6 +367,19 @@ tasks:
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
       - |
         echo "✅ build:web-arm64 complete!"
+
+  build:fastapi-arm64:
+    desc: Build FastAPI production image for ARM64 and push to registry
+    dotenv: *BUILD_DOTENV
+    vars:
+      PLATFORM: linux/arm64/v8
+      FASTAPI_DOCKER_IMAGE_TAG: fastapi_arm64
+    cmds:
+      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}} -f fastapi/Dockerfile.prod fastapi
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
+      - |
+        echo "✅ build:fastapi-arm64 complete!"
 
   build:frontend-arm64:
     desc: Build frontend production image for ARM64 and push to registry
@@ -458,5 +491,3 @@ tasks:
       - echo "Pull latest images, run migrations, etc."
       - docker login {{.CI_REGISTRY}} -u {{.CI_REGISTRY_USER}} -p {{.CI_REGISTRY_PASSWORD}}
       - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} up -d --pull always "
-      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec web python manage.py collectstatic --no-input --clear"
-      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec web python manage.py migrate --noinput"
