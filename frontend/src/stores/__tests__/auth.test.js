@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAuthStore } from '../auth'
@@ -8,6 +9,7 @@ vi.mock('@/services/api')
 describe('useAuthStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    localStorage.clear()
     vi.clearAllMocks()
   })
 
@@ -34,14 +36,16 @@ describe('useAuthStore', () => {
       const store = useAuthStore()
       await store.checkSession()
 
-      expect(api.get).toHaveBeenCalledWith('/api/auth/session/')
+      expect(api.get).toHaveBeenCalledWith('/session/', {
+        headers: { Authorization: 'Bearer null' },
+      })
       expect(store.user).toEqual({ username: 'ben' })
       expect(store.isAuthenticated).toBe(true)
     })
 
     it('clears user when session is not authenticated', async () => {
       api.get.mockResolvedValue({
-        data: { isAuthenticated: false },
+        data: { isAuthenticated: false, user: null },
       })
 
       const store = useAuthStore()
@@ -67,16 +71,24 @@ describe('useAuthStore', () => {
   describe('login', () => {
     it('sets user on successful login', async () => {
       api.post.mockResolvedValue({
-        data: { user: { username: 'ben' } },
+        data: { access_token: 'test-access-token' },
+      })
+      api.get.mockResolvedValue({
+        data: { username: 'ben' },
       })
 
       const store = useAuthStore()
       await store.login('ben', 'password123')
 
-      expect(api.post).toHaveBeenCalledWith('/api/auth/login/', {
+      expect(api.post).toHaveBeenCalledWith('/token/', expect.any(FormData))
+      const formData = api.post.mock.calls[0][1]
+      expect(Object.fromEntries(formData.entries())).toEqual({
+        grant_type: 'password',
         username: 'ben',
         password: 'password123',
       })
+      expect(api.get).toHaveBeenCalledWith('/users/me/')
+      expect(localStorage.getItem('benergy-access-token')).toBe('test-access-token')
       expect(store.user).toEqual({ username: 'ben' })
       expect(store.isAuthenticated).toBe(true)
     })
@@ -92,16 +104,22 @@ describe('useAuthStore', () => {
 
   // ---- logout ----
   describe('logout', () => {
-    it('clears user on logout', async () => {
-      api.post.mockResolvedValue({})
+    it('clears user, token, and stored access token', async () => {
+      api.post.mockResolvedValue({
+        data: { access_token: 'test-access-token' },
+      })
 
       const store = useAuthStore()
       store.user = { username: 'ben' }
+      store.token = 'test-access-token'
+      localStorage.setItem('benergy-access-token', 'test-access-token')
 
       await store.logout()
 
-      expect(api.post).toHaveBeenCalledWith('/api/auth/logout/')
+      expect(api.post).not.toHaveBeenCalled()
       expect(store.user).toBeNull()
+      expect(store.token).toBeNull()
+      expect(localStorage.getItem('benergy-access-token')).toBeNull()
       expect(store.isAuthenticated).toBe(false)
     })
   })

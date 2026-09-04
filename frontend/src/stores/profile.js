@@ -13,7 +13,7 @@ export const useProfileStore = defineStore('profile', () => {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/api/profile/')
+      const { data } = await api.get('/profile/')
       profile.value = data
     } catch (e) {
       error.value = e
@@ -23,7 +23,7 @@ export const useProfileStore = defineStore('profile', () => {
   }
 
   async function fetchOptions() {
-    const { data } = await api.get('/api/profile/options/')
+    const { data } = await api.get('/profile/options/')
     options.value = data
   }
 
@@ -31,7 +31,7 @@ export const useProfileStore = defineStore('profile', () => {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.patch('/api/profile/', formData)
+      const { data } = await api.patch('/profile/', formData)
       profile.value = data
       const authStore = useAuthStore()
       authStore.user.display_name = data.display_name
@@ -47,7 +47,7 @@ export const useProfileStore = defineStore('profile', () => {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.post('/api/profile/clear/')
+      const { data } = await api.post('/profile/clear/')
       profile.value = data
       const authStore = useAuthStore()
       authStore.user.display_name = ''

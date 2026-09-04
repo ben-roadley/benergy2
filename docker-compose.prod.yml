@@ -11,6 +11,16 @@ services:
       - .env.prod
     depends_on:
       - db
+  fastapi:
+    image: ${CI_REGISTRY_IMAGE}:${FASTAPI_DOCKER_IMAGE_TAG}
+    restart: always
+    command: uvicorn src.main:app --host 0.0.0.0 --port ${FASTAPI_PORT:-8888}
+    expose:
+      - ${FASTAPI_PORT:-8888}
+    env_file:
+      - .env.prod
+    depends_on:
+      - db
   db:
     image: postgres:17
     restart: always
