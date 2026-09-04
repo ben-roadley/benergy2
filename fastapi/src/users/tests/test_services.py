@@ -228,18 +228,25 @@ class TestClearProfile:
         mock_session.refresh.assert_called_once()
 
     def test_clear_profile_not_found(self, mock_session):
-        """Test that None is returned when profile is not found."""
+        """Test that a new default profile is created when none exists."""
         # Arrange
         user_id = 999
         mock_session.exec.return_value.first.return_value = None
+
+        def fake_refresh(instance):
+            instance.id = 1
+
+        mock_session.refresh.side_effect = fake_refresh
 
         # Act
         result = clear_profile(user_id, mock_session)
 
         # Assert
-        assert result is None
-        mock_session.add.assert_not_called()
-        mock_session.commit.assert_not_called()
+        assert isinstance(result, ProfileDetails)
+        assert result.id == 1
+        mock_session.add.assert_called_once()
+        mock_session.commit.assert_called_once()
+        mock_session.refresh.assert_called_once()
 
     def test_clear_profile_resets_all_optional_fields(
         self, mock_session, sample_profile
