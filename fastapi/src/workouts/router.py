@@ -106,12 +106,15 @@ def fetch_workout_logs(
     current_user: Annotated[User, Depends(get_current_active_user)],
     session: Session = Depends(get_session),
 ):
-    w = get_workout_logs(
+    workout = get_workout(
         user_id=current_user.id, workout_id=workout_id, session=session
     )
-    if not w:
+    if not workout:
         raise HTTPException(status_code=404, detail="Workout not found.")
-    return w
+
+    return get_workout_logs(
+        user_id=current_user.id, workout_id=workout_id, session=session
+    )
 
 
 @router.get("/{workout_id}/", response_model=WorkoutWithExercisesDetails)
