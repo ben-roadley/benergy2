@@ -57,26 +57,27 @@ def clear_profile(user_id: int, session: Session) -> ProfileDetails:
     are set to []. The user relation is never modified.
     """
     profile = session.exec(select(Profile).where(Profile.user_id == user_id)).first()
-    if profile:
-        profile.display_name = ""
-        profile.date_of_birth = None
-        profile.sex = ""
-        profile.weight_kg = None
-        profile.height_cm = None
-        profile.fitness_level = ""
-        profile.goals = []
-        profile.equipment = []
-        profile.session_duration = ""
-        profile.training_days_per_week = None
-        profile.injury_history = ""
-        profile.lifestyle_description = ""
-        profile.sleep_quality = ""
-        profile.stress_level = ""
-        session.add(profile)
-        session.commit()
-        session.refresh(profile)
-        return ProfileDetails.model_validate(profile)
-    return None
+    if not profile:
+        profile = Profile(user_id=user_id)
+
+    profile.display_name = ""
+    profile.date_of_birth = None
+    profile.sex = ""
+    profile.weight_kg = None
+    profile.height_cm = None
+    profile.fitness_level = ""
+    profile.goals = []
+    profile.equipment = []
+    profile.session_duration = ""
+    profile.training_days_per_week = None
+    profile.injury_history = ""
+    profile.lifestyle_description = ""
+    profile.sleep_quality = ""
+    profile.stress_level = ""
+    session.add(profile)
+    session.commit()
+    session.refresh(profile)
+    return ProfileDetails.model_validate(profile)
 
 
 def get_or_create_profile(user_id: int, session: Session) -> ProfileDetails:
