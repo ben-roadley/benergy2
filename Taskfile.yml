@@ -345,12 +345,13 @@ tasks:
     dotenv: *BUILD_DOTENV
     vars:
       VERSION: '{{.RELEASE_VERSION | default "dev"}}'
+      GITHUB_REPOSITORY: '{{.GITHUB_REPOSITORY | default "ben-roadley/benergy2"}}'
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:web-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:web-latest -f api/Dockerfile.prod --push api
-      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:fastapi-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:fastapi-latest -f fastapi/Dockerfile.prod --push fastapi
-      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:nginx-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:nginx-latest -f nginx/Dockerfile --push nginx
-      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:frontend-{{.VERSION}} -t ghcr.io/$GITHUB_REPOSITORY:frontend-latest -f frontend/Dockerfile.prod --push frontend
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:web-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:web-latest -f api/Dockerfile.prod --push api
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:fastapi-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:fastapi-latest -f fastapi/Dockerfile.prod --push fastapi
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:nginx-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:nginx-latest -f nginx/Dockerfile --push nginx
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-latest -f frontend/Dockerfile.prod --push frontend
 
       - |
         echo "✅ build:all-multi complete! (version: {{.VERSION}})"
