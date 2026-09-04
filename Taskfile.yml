@@ -261,7 +261,7 @@ tasks:
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
-      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
+      - docker build --platform {{.PLATFORM}} --pull --no-cache --build-arg VITE_API_BASE=/api -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
       - |
         echo "✅ build:prod-amd64 complete!"
@@ -300,7 +300,7 @@ tasks:
       FRONTEND_DOCKER_IMAGE_TAG: frontend_amd64
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}  -f frontend/Dockerfile.prod frontend
+      - docker build --platform {{.PLATFORM}} --pull --no-cache --build-arg VITE_API_BASE=/api -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}  -f frontend/Dockerfile.prod frontend
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
       - |
         echo "✅ build:frontend-amd64 complete!"
@@ -335,7 +335,7 @@ tasks:
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
-      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
+      - docker build --platform {{.PLATFORM}} --pull --no-cache --build-arg VITE_API_BASE=/api -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
       - |
         echo "✅ build:all-arm64 complete!"
@@ -351,7 +351,7 @@ tasks:
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:web-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:web-latest -f api/Dockerfile.prod --push api
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:fastapi-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:fastapi-latest -f fastapi/Dockerfile.prod --push fastapi
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:nginx-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:nginx-latest -f nginx/Dockerfile --push nginx
-      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-latest -f frontend/Dockerfile.prod --push frontend
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache --build-arg VITE_API_BASE=/api -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-latest -f frontend/Dockerfile.prod --push frontend
 
       - |
         echo "✅ build:all-multi complete! (version: {{.VERSION}})"
@@ -390,7 +390,7 @@ tasks:
       FRONTEND_DOCKER_IMAGE_TAG: frontend_arm64
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
+      - docker build --platform {{.PLATFORM}} --pull --no-cache --build-arg VITE_API_BASE=/api -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
       - |
         echo "✅ build:frontend-arm64 complete!"
