@@ -9,6 +9,10 @@ RUN npm ci
 
 COPY . .
 
+# baked in at build time since Vite inlines env vars into the static bundle
+ARG VITE_API_BASE=/api
+ENV VITE_API_BASE=$VITE_API_BASE
+
 RUN npm run build
 
 # Production stage
