@@ -1,0 +1,36 @@
+# ---- builder stage: compiles psycopg2 and other C-extension deps ----
+FROM python:3.13-slim AS builder
+
+WORKDIR /usr/src/fastapi
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# libpq-dev + gcc are only needed to build psycopg2 from source
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY ./requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ---- final stage: runtime image without build toolchain ----
+FROM python:3.13-slim
+
+WORKDIR /usr/src/fastapi
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# libpq5 is the runtime lib psycopg2 links against; netcat is used by entrypoint.sh to wait for postgres
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq5 netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /install /usr/local
+COPY . .
+
+RUN sed -i 's/\r$//g' entrypoint.sh && chmod +x entrypoint.sh
+
+# command supplied by docker-compose (dev and prod)
+ENTRYPOINT ["sh", "entrypoint.sh"]
