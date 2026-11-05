@@ -28,7 +28,7 @@ Route `/muscles/:name`. From top to bottom:
 1. Top bar (already in the app shell).
 2. `Breadcrumb`: Explore > *Muscle* (Explore links back to `/`).
 3. Heading with the capitalized muscle name, and a `Tag` with the number of exercises.
-4. `IconField` + `InputText` search box ("Search exercises"): client-side filter on name, no new API call.
+4. Filter bar: `IconField` + `InputText` search box ("Search exercises") and, next to it, three `Select`s: **Category**, **Level**, **Equipment**. Each has a clear button and shows its label as placeholder when empty. Options are the distinct non-null values found in the loaded list, sorted alphabetically (so only values that give results are offered). Filters combine with AND, together with the search text. All filtering is client-side, no new API call. The bar wraps on narrow screens.
 5. `DataView` in list layout, 20 rows per page with its built-in paginator (hidden when there is one page). One row per exercise, the whole row is a link to `/exercises/:slug`:
 
 ```
@@ -47,7 +47,7 @@ Why a list and not a grid of cards: names can be long, there are three attribute
 States:
 - Loading: 6 `Skeleton` rows.
 - Empty (`[]`, for example an unknown muscle in the URL): `Message` "No exercises found for this muscle."
-- No search match: `Message` "No exercise matches your search."
+- No match (search or filters): `Message` "No exercise matches your search."
 - Error: `Message` (error severity) "Could not load exercises."
 
 ## Acceptance criteria
@@ -55,11 +55,12 @@ States:
 - [ ] Opening a card from the home page lands on `/muscles/<name>` and lists only that muscle's exercises, with the right count in the heading.
 - [ ] Each row shows image, name, and category / level / equipment tags.
 - [ ] Missing or broken images show a placeholder, not a broken icon.
-- [ ] The search box filters rows by name as the user types; the paginator follows the filtered result.
+- [ ] The search box and the Category / Level / Equipment selects filter rows (combined with AND); the paginator goes back to page 1 and follows the filtered result.
+- [ ] Select options come from the loaded exercises; clearing a select removes its filter.
 - [ ] Clicking a row navigates to `/exercises/<slug>` (detail page built later).
 - [ ] Breadcrumb "Explore" goes back to the home page.
 - [ ] Loading, empty, no-match and error states are displayed.
 
 ## Out of scope
 
-The exercise detail page, filters by category / level / equipment, sorting options, serving images from our own backend, infinite scroll.
+The exercise detail page, filtering on exercises without equipment (`null`), multi-select filters, sorting options, serving images from our own backend, infinite scroll.

@@ -8,9 +8,15 @@ h1 {
   text-transform: capitalize;
 }
 
-.search {
-  display: block;
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+.search {
+  flex: 1 1 16rem;
   max-width: 24rem;
 }
 

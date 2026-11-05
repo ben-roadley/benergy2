@@ -54,6 +54,43 @@ describe('MuscleExercises', () => {
     expect(el.textContent).toContain('No exercise matches your search.');
   });
 
+  it('offers distinct options and combines category, level and equipment filters', async () => {
+    const { fixture, el } = await render(
+      of([
+        exercise('a', 'A', { category: 'strength', level: 'beginner', equipment: 'barbell' }),
+        exercise('b', 'B', { category: 'strength', level: 'expert', equipment: null }),
+        exercise('c', 'C', { category: 'stretching', level: 'beginner', equipment: 'barbell' }),
+      ]),
+    );
+    const cmp = fixture.componentInstance as unknown as {
+      categories(): string[];
+      levels(): string[];
+      equipments(): string[];
+      category: { set(v: string | null): void };
+      level: { set(v: string | null): void };
+      equipment: { set(v: string | null): void };
+    };
+
+    expect(cmp.categories()).toEqual(['strength', 'stretching']);
+    expect(cmp.levels()).toEqual(['beginner', 'expert']);
+    expect(cmp.equipments()).toEqual(['barbell']);
+    expect(el.querySelectorAll('p-select').length).toBe(3);
+
+    cmp.category.set('strength');
+    await fixture.whenStable();
+    expect(el.querySelectorAll('a.row').length).toBe(2);
+
+    cmp.level.set('beginner');
+    cmp.equipment.set('barbell');
+    await fixture.whenStable();
+    expect(el.querySelectorAll('a.row').length).toBe(1);
+
+    cmp.category.set('stretching');
+    cmp.level.set('expert');
+    await fixture.whenStable();
+    expect(el.textContent).toContain('No exercise matches your search.');
+  });
+
   it('paginates long lists at 20 rows', async () => {
     const many = Array.from({ length: 45 }, (_, i) => exercise(`e${i}`, `Exercise ${i}`));
     const { el } = await render(of(many));

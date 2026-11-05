@@ -16,17 +16,43 @@
 } @else if (exercises.value()?.length === 0) {
   <p-message severity="info">No exercises found for this muscle.</p-message>
 } @else {
-  <p-iconfield class="search">
-    <p-inputicon class="pi pi-search" />
-    <input
-      pInputText
-      type="search"
-      placeholder="Search exercises"
-      aria-label="Search exercises"
-      [value]="query()"
-      (input)="query.set($any($event.target).value)"
+  <div class="filters">
+    <p-iconfield class="search">
+      <p-inputicon class="pi pi-search" />
+      <input
+        pInputText
+        type="search"
+        placeholder="Search exercises"
+        aria-label="Search exercises"
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+      />
+    </p-iconfield>
+    <p-select
+      [options]="categories()"
+      [ngModel]="category()"
+      (ngModelChange)="category.set($event)"
+      placeholder="Category"
+      ariaLabel="Category"
+      [showClear]="true"
     />
-  </p-iconfield>
+    <p-select
+      [options]="levels()"
+      [ngModel]="level()"
+      (ngModelChange)="level.set($event)"
+      placeholder="Level"
+      ariaLabel="Level"
+      [showClear]="true"
+    />
+    <p-select
+      [options]="equipments()"
+      [ngModel]="equipment()"
+      (ngModelChange)="equipment.set($event)"
+      placeholder="Equipment"
+      ariaLabel="Equipment"
+      [showClear]="true"
+    />
+  </div>
 
   @if (filtered().length === 0) {
     <p-message severity="info">No exercise matches your search.</p-message>
