@@ -2,6 +2,8 @@ package com.benergy.catalog;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -41,5 +43,14 @@ class ExerciseDefinitionRepositoryTests {
 	@Test
 	void slugLookupIsCaseSensitive() {
 		assertThat(repository.findById("3_4_sit-up")).isEmpty();
+	}
+
+	@Test
+	void muscleCountsAreUniqueSortedAndAddUpToTheCatalog() {
+		List<MuscleCount> muscles = repository.findMuscleCounts();
+		List<String> names = muscles.stream().map(MuscleCount::name).toList();
+
+		assertThat(names).isNotEmpty().doesNotHaveDuplicates().isSorted().contains("quadriceps");
+		assertThat(muscles.stream().mapToLong(MuscleCount::count).sum()).isEqualTo(repository.count());
 	}
 }
