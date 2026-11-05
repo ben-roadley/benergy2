@@ -1,0 +1,21 @@
+FROM eclipse-temurin:21-jdk AS build
+
+WORKDIR /build
+
+COPY mvnw pom.xml ./
+COPY .mvn .mvn
+RUN sed -i 's/\r$//g' mvnw && chmod +x mvnw \
+    && ./mvnw -B dependency:go-offline
+
+COPY src src
+RUN ./mvnw -B -DskipTests package
+
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+RUN useradd --system --no-create-home app
+COPY --from=build /build/target/*.jar app.jar
+USER app
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

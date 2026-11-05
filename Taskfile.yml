@@ -60,6 +60,10 @@ tasks:
         echo "  task b:coverage: - Require 100% coverage for FastAPI service modules"
         echo "  task b:lint:     - Run FastAPI linters"
         echo ""
+        echo "Exercise catalog API (Spring Boot) commands:"
+        echo "  task c:shell:    - Open a shell in the catalog API container"
+        echo "  task c:test:     - Run catalog API tests (Maven)"
+        echo ""
         echo "Frontend (Vue) commands:"
         echo "  task f:install:    - Install npm deps (inside container)"
         echo "  task f:test:       - Run frontend tests"
@@ -142,6 +146,23 @@ tasks:
       - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'isort /usr/src/fastapi'"
       - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'black /usr/src/fastapi'"
       - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.BACK}} sh -c 'flake8 /usr/src/fastapi'"
+
+
+  # --------------------
+  # Exercise catalog API (Spring Boot)
+  # --------------------
+  c:shell:
+    desc: Interactive shell inside the exercise catalog API container
+    dotenv: *DEV_DOTENV
+    interactive: true
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec exercise-catalog-api bash"
+
+  c:test:
+    desc: Run exercise catalog API tests (Maven)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec exercise-catalog-api ./mvnw -B test {{.CLI_ARGS}}"
 
 
   # --------------------
