@@ -11,9 +11,28 @@ export interface ExerciseSummary {
   image: string | null;
 }
 
+export interface ExerciseDetail {
+  slug: string;
+  name: string;
+  category: string;
+  force: string | null;
+  level: string;
+  mechanic: string | null;
+  equipment: string | null;
+  primary_muscles: string[];
+  secondary_muscles: string[];
+  instructions: string[];
+  images: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
   private readonly http = inject(HttpClient);
+
+  /** One full exercise, or a 404 error when the slug is unknown. */
+  getBySlug(slug: string): Observable<ExerciseDetail> {
+    return this.http.get<ExerciseDetail>(`/api/exercise-definitions/${encodeURIComponent(slug)}`);
+  }
 
   /** Exercises of one primary muscle, sorted by name (proxied to the catalog API). */
   getByMuscle(muscle: string): Observable<ExerciseSummary[]> {
