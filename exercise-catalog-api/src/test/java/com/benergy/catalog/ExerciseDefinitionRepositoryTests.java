@@ -84,5 +84,6 @@ class ExerciseDefinitionRepositoryTests {
 		assertThat(all.stream().map(e -> e.name().toLowerCase().replaceAll("[^a-z0-9]", "")).toList())
 				.isSorted();
 		assertThat(all).anyMatch(e -> e.slug().equals("Ankle_Circles") && e.equipment() == null);
+		assertThat(all).anyMatch(e -> e.slug().equals("3_4_Sit-Up") && "3_4_Sit-Up/0.jpg".equals(e.image()));
 	}
 }

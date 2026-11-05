@@ -1,0 +1,75 @@
+<p-breadcrumb [home]="home" [model]="crumbs()" />
+
+<div class="heading">
+  <h1>{{ name() }}</h1>
+  @if (exercises.hasValue()) {
+    <p-tag [value]="exercises.value().length + ' exercises'" severity="secondary" />
+  }
+</div>
+
+@if (exercises.error()) {
+  <p-message severity="error">Could not load exercises.</p-message>
+} @else if (exercises.isLoading()) {
+  @for (_ of placeholders; track $index) {
+    <p-skeleton height="6rem" styleClass="skeleton-row" />
+  }
+} @else if (exercises.value()?.length === 0) {
+  <p-message severity="info">No exercises found for this muscle.</p-message>
+} @else {
+  <p-iconfield class="search">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      placeholder="Search exercises"
+      aria-label="Search exercises"
+      [value]="query()"
+      (input)="query.set($any($event.target).value)"
+    />
+  </p-iconfield>
+
+  @if (filtered().length === 0) {
+    <p-message severity="info">No exercise matches your search.</p-message>
+  } @else {
+    <p-dataview
+      [value]="filtered()"
+      [rows]="20"
+      [paginator]="true"
+      [alwaysShowPaginator]="false"
+      [(first)]="first"
+    >
+      <ng-template #list let-items>
+        <div class="rows">
+          @for (exercise of items; track exercise.slug) {
+            <a class="row" [routerLink]="['/exercises', exercise.slug]">
+              @if (exercise.image && !failedImages().has(exercise.slug)) {
+                <p-image
+                  [src]="imageUrl(exercise.image)"
+                  [alt]="exercise.name"
+                  width="96"
+                  height="96"
+                  loading="lazy"
+                  imageClass="thumb"
+                  (onImageError)="markFailed(exercise.slug)"
+                />
+              } @else {
+                <div class="thumb placeholder"><i class="pi pi-image"></i></div>
+              }
+              <div class="info">
+                <div class="name">{{ exercise.name }}</div>
+                <div class="tags">
+                  <p-tag [value]="exercise.category" severity="info" />
+                  <p-tag [value]="exercise.level" severity="secondary" />
+                  @if (exercise.equipment) {
+                    <p-tag [value]="exercise.equipment" severity="secondary" />
+                  }
+                </div>
+              </div>
+              <i class="pi pi-angle-right chevron"></i>
+            </a>
+          }
+        </div>
+      </ng-template>
+    </p-dataview>
+  }
+}

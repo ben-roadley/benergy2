@@ -19,7 +19,7 @@ public interface ExerciseDefinitionRepository extends JpaRepository<ExerciseDefi
 	List<MuscleCount> findMuscleCounts();
 
 	@Query(nativeQuery = true, value = """
-			select slug, name, category, equipment, level
+			select slug, name, category, equipment, level, images ->> 0 as image
 			from catalog_exercisedefinition
 			order by name, slug
 			""")
@@ -27,7 +27,7 @@ public interface ExerciseDefinitionRepository extends JpaRepository<ExerciseDefi
 
 	/** The muscle is a bound parameter; jsonb_build_array wraps it so no JSON is built by hand. */
 	@Query(nativeQuery = true, value = """
-			select slug, name, category, equipment, level
+			select slug, name, category, equipment, level, images ->> 0 as image
 			from catalog_exercisedefinition
 			where primary_muscles @> jsonb_build_array(cast(:muscle as text))
 			order by name, slug

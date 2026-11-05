@@ -62,7 +62,7 @@ class ExerciseDefinitionControllerTests {
 	@Test
 	void listsSummariesForAMuscleWithExactlyFiveSnakeCaseFields() throws Exception {
 		given(repository.findSummariesByPrimaryMuscle("middle back")).willReturn(List.of(
-				new ExerciseSummary("Ankle_Circles", "Ankle Circles", "stretching", null, "beginner")));
+				new ExerciseSummary("Ankle_Circles", "Ankle Circles", "stretching", null, "beginner", "Ankle_Circles/0.jpg")));
 
 		mockMvc.perform(get("/exercise-definitions").param("primary_muscle", "middle back"))
 				.andExpect(status().isOk())
@@ -72,15 +72,16 @@ class ExerciseDefinitionControllerTests {
 				.andExpect(jsonPath("$[0].category").value("stretching"))
 				.andExpect(jsonPath("$[0].equipment").value(org.hamcrest.Matchers.nullValue()))
 				.andExpect(jsonPath("$[0].level").value("beginner"))
-				.andExpect(jsonPath("$[0].*").value(org.hamcrest.Matchers.hasSize(5)));
+				.andExpect(jsonPath("$[0].image").value("Ankle_Circles/0.jpg"))
+				.andExpect(jsonPath("$[0].*").value(org.hamcrest.Matchers.hasSize(6)));
 		verify(repository, never()).findAllSummaries();
 	}
 
 	@Test
 	void listsAllSummariesWhenNoMuscleIsGiven() throws Exception {
 		given(repository.findAllSummaries()).willReturn(List.of(
-				new ExerciseSummary("a", "A", "strength", "barbell", "beginner"),
-				new ExerciseSummary("b", "B", "strength", null, "expert")));
+				new ExerciseSummary("a", "A", "strength", "barbell", "beginner", "a/0.jpg"),
+				new ExerciseSummary("b", "B", "strength", null, "expert", null)));
 
 		mockMvc.perform(get("/exercise-definitions"))
 				.andExpect(status().isOk())

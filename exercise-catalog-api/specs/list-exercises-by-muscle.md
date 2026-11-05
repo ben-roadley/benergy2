@@ -46,9 +46,11 @@ Return a lightweight list of exercises, optionally restricted to one primary mus
 
 (Abridged: the real response has one entry per calves exercise, 28 today.)
 
-Each entry has exactly five fields: `slug`, `name`, `category`, `equipment` (nullable, returned as `null`), `level`. Instructions, images, force, mechanic and the muscle arrays are only in the detail endpoint.
+Each entry has exactly six fields: `slug`, `name`, `category`, `equipment` (nullable, returned as `null`), `level`, `image` (nullable: the first entry of the exercise `images`, a relative path as stored, `null` when the exercise has none). Instructions, the other images, force, mechanic and the muscle arrays are only in the detail endpoint.
 
 ## Rules
+
+0. `image` is `images ->> 0` in the queries (the first image, or `null`). Serving the image files stays out of scope: the UI builds the URL from a configurable base.
 
 1. With `primary_muscle`, only exercises whose `primary_muscles` contains that muscle are returned.
 2. The match is exact and case-sensitive, like the slug lookup: `Quadriceps` returns `[]`. The UI always sends the names it got from `/muscles`.
@@ -63,7 +65,7 @@ Each entry has exactly five fields: `slug`, `name`, `category`, `equipment` (nul
 
 | Piece | Choice |
 |-------|--------|
-| Result type | `ExerciseSummary`, a record `(String slug, String name, String category, String equipment, String level)`. Records were mapped from native-query columns in the muscles spec, and the same approach is used here. |
+| Result type | `ExerciseSummary`, a record `(String slug, String name, String category, String equipment, String level, String image)`. Records were mapped from native-query columns in the muscles spec, and the same approach is used here. |
 | Query | Two native queries on `ExerciseDefinitionRepository`, both returning `List<ExerciseSummary>` ordered by `name, slug`: `findAllSummaries()` and `findSummariesByPrimaryMuscle(String muscle)`. The filter is `where primary_muscles @> jsonb_build_array(cast(:muscle as text))`. |
 | Safety | The muscle is a bound parameter, and `jsonb_build_array` builds the JSON, so no quoting by hand and no injection. The `?`-style jsonb operators are avoided because `?` clashes with JDBC placeholders. |
 | Controller | A `list` method in `ExerciseDefinitionController`: `@GetMapping` with `@RequestParam(required = false) String primaryMuscle`, mapped to the query parameter `primary_muscle` (`@RequestParam("primary_muscle")`). It calls the first or second query depending on whether the parameter is present. |
@@ -73,7 +75,7 @@ Why two queries rather than one with an optional parameter: a single native quer
 
 ## Acceptance criteria
 
-- [x] `GET /exercise-definitions?primary_muscle=calves` returns 200 with only calves exercises, each with exactly the five summary fields.
+- [x] `GET /exercise-definitions?primary_muscle=calves` returns 200 with only calves exercises, each with exactly the six summary fields.
 - [x] `GET /exercise-definitions?primary_muscle=middle%20back` works for a muscle name containing a space.
 - [x] `GET /exercise-definitions?primary_muscle=Quadriceps` and `?primary_muscle=nope` return `200` and `[]`.
 - [x] `GET /exercise-definitions` returns all exercises (873 today), sorted by name.

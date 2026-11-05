@@ -1,0 +1,26 @@
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ExerciseService } from './exercise';
+
+describe('ExerciseService', () => {
+  it('should GET the exercises of a muscle, encoding the name', () => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const http = TestBed.inject(HttpTestingController);
+    let result: unknown;
+
+    TestBed.inject(ExerciseService)
+      .getByMuscle('middle back')
+      .subscribe((r) => (result = r));
+    const req = http.expectOne(
+      (r) => r.url === '/api/exercise-definitions' && r.params.get('primary_muscle') === 'middle back',
+    );
+    req.flush([]);
+
+    expect(result).toEqual([]);
+    expect(req.request.urlWithParams).toContain('primary_muscle=middle%20back');
+    http.verify();
+  });
+});
