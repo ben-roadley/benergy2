@@ -1,0 +1,24 @@
+<h1>Explore</h1>
+
+@if (muscles.error()) {
+  <p-message severity="error">Could not load muscles.</p-message>
+} @else if (muscles.isLoading()) {
+  <div class="grid">
+    @for (_ of placeholders; track $index) {
+      <p-skeleton height="5.5rem" />
+    }
+  </div>
+} @else if (muscles.value()?.length === 0) {
+  <p-message severity="info">No muscles found.</p-message>
+} @else {
+  <div class="grid">
+    @for (muscle of muscles.value(); track muscle.name) {
+      <a [routerLink]="['/muscles', muscle.name]">
+        <p-card>
+          <div class="name">{{ muscle.name }}</div>
+          <div class="count">{{ muscle.count }} exercises</div>
+        </p-card>
+      </a>
+    }
+  </div>
+}

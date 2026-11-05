@@ -1,0 +1,27 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 1rem;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+a:hover p-card {
+  outline: 1px solid var(--p-primary-color);
+  border-radius: var(--p-card-border-radius);
+}
+
+.name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.count {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
