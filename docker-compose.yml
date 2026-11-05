@@ -41,6 +41,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  exercise-catalog-ui:
+    build: ./exercise-catalog-ui
+    working_dir: /usr/src/exercise-catalog-ui
+    command: npm start -- --host 0.0.0.0 --port 4200 --poll 1000
+    volumes:
+      - ./exercise-catalog-ui/:/usr/src/exercise-catalog-ui/
+      - /usr/src/exercise-catalog-ui/node_modules
+    ports:
+      - 4200:4200
+    depends_on:
+      - exercise-catalog-api
   db:
     image: postgres:17
     volumes:

@@ -1,0 +1,8 @@
+# Learning Angular (exercise-catalog-ui)
+
+## 1. Scaffolding: standalone app, PrimeNG, dark mode
+
+- 🧠 **Key concept:** `ng new` generates a standalone, zoneless app. There is no `NgModule`: `main.ts` calls `bootstrapApplication(App, appConfig)` and `app.config.ts` lists the global providers (`provideRouter`, `providePrimeNG`). Components declare what they use in their own `imports: [...]` (here `ButtonModule`, `CardModule`). State lives in `signal()`s read as `clicks()` in the template.
+- 🖼️ **Vue connection:** `app.config.ts` ≈ the `app.use(router).use(PrimeVue, {...})` chain in `main.ts`. A component's `imports` array replaces Vue's auto-registered local components in `<script setup>`. `signal` ≈ `ref`, but you call it (`clicks()`) to read and use `.set()` / `.update()` to write.
+- 🔍 **Under the hood:** Dark mode is a CSS class: `darkModeSelector: '.app-dark'` tells the Aura preset to emit its dark tokens under `.app-dark`, and `<html class="app-dark">` turns it on permanently. Zoneless means change detection is triggered by signals and events, not by patching the browser with zone.js. In Docker, `ng serve --host 0.0.0.0 --poll 1000` is needed so the dev server is reachable and sees bind-mount changes on Windows.
+- 🛠️ **Common pitfalls:** forgetting to add a PrimeNG module to the component's `imports` (the tag silently renders as an unknown element or errors); mutating a signal's object value in place instead of `set`/`update`; the anonymous `node_modules` volume in compose hides host `node_modules`, so after `package.json` changes rebuild the image (`docker compose build exercise-catalog-ui`).

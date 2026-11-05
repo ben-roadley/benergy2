@@ -64,6 +64,10 @@ tasks:
         echo "  task c:shell:    - Open a shell in the catalog API container"
         echo "  task c:test:     - Run catalog API tests (Maven)"
         echo ""
+        echo "Exercise catalog UI (Angular) commands:"
+        echo "  task e:shell:    - Open a shell in the catalog UI container"
+        echo "  task e:test:     - Run catalog UI tests"
+        echo ""
         echo "Frontend (Vue) commands:"
         echo "  task f:install:    - Install npm deps (inside container)"
         echo "  task f:test:       - Run frontend tests"
@@ -164,6 +168,21 @@ tasks:
     cmds:
       - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec exercise-catalog-api ./mvnw -B test {{.CLI_ARGS}}"
 
+  # --------------------
+  # Exercise catalog UI (Angular)
+  # --------------------
+  e:shell:
+    desc: Interactive shell inside the exercise catalog UI container
+    dotenv: *DEV_DOTENV
+    interactive: true
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec exercise-catalog-ui sh"
+
+  e:test:
+    desc: Run exercise catalog UI tests (Angular)
+    dotenv: *DEV_DOTENV
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec exercise-catalog-ui npx ng test --watch=false {{.CLI_ARGS}}"
 
   # --------------------
   # Frontend (Vue)
