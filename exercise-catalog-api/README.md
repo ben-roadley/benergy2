@@ -11,7 +11,10 @@ task c:shell           # shell inside the container
 ```
 
 - `GET /hello` — hello world
+- `GET /exercise-definitions/{slug}` — one exercise definition ([spec](specs/get-exercise-by-slug.md))
 - `GET /actuator/health` — health check
+
+Feature specs live in `specs/`. `task c:test` includes repository tests that read the compose Postgres, so the stack must be up (`task up`) with the Django catalog loaded.
 
 ## Notes
 
