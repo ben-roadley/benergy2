@@ -13,6 +13,7 @@ task c:shell           # shell inside the container
 - `GET /hello` — hello world
 - `GET /exercise-definitions/{slug}` — one exercise definition ([spec](specs/get-exercise-by-slug.md))
 - `GET /muscles` — primary muscles with exercise counts ([spec](specs/list-muscles.md))
+- `GET /exercise-definitions?primary_muscle=` — exercise summaries, optionally for one muscle ([spec](specs/list-exercises-by-muscle.md))
 - `GET /actuator/health` — health check
 
 Feature specs live in `specs/`. `task c:test` includes repository tests that read the compose Postgres, so the stack must be up (`task up`) with the Django catalog loaded.

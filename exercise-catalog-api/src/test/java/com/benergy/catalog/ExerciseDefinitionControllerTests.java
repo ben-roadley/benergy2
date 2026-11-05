@@ -1,6 +1,9 @@
 package com.benergy.catalog;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -54,6 +57,44 @@ class ExerciseDefinitionControllerTests {
 				.andExpect(jsonPath("$.force").value(org.hamcrest.Matchers.nullValue()))
 				.andExpect(jsonPath("$.mechanic").value(org.hamcrest.Matchers.nullValue()))
 				.andExpect(jsonPath("$.equipment").value(org.hamcrest.Matchers.nullValue()));
+	}
+
+	@Test
+	void listsSummariesForAMuscleWithExactlyFiveSnakeCaseFields() throws Exception {
+		given(repository.findSummariesByPrimaryMuscle("middle back")).willReturn(List.of(
+				new ExerciseSummary("Ankle_Circles", "Ankle Circles", "stretching", null, "beginner")));
+
+		mockMvc.perform(get("/exercise-definitions").param("primary_muscle", "middle back"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].slug").value("Ankle_Circles"))
+				.andExpect(jsonPath("$[0].name").value("Ankle Circles"))
+				.andExpect(jsonPath("$[0].category").value("stretching"))
+				.andExpect(jsonPath("$[0].equipment").value(org.hamcrest.Matchers.nullValue()))
+				.andExpect(jsonPath("$[0].level").value("beginner"))
+				.andExpect(jsonPath("$[0].*").value(org.hamcrest.Matchers.hasSize(5)));
+		verify(repository, never()).findAllSummaries();
+	}
+
+	@Test
+	void listsAllSummariesWhenNoMuscleIsGiven() throws Exception {
+		given(repository.findAllSummaries()).willReturn(List.of(
+				new ExerciseSummary("a", "A", "strength", "barbell", "beginner"),
+				new ExerciseSummary("b", "B", "strength", null, "expert")));
+
+		mockMvc.perform(get("/exercise-definitions"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(2));
+		verify(repository, never()).findSummariesByPrimaryMuscle(anyString());
+	}
+
+	@Test
+	void returnsEmptyArrayWhenNoExerciseMatchesTheMuscle() throws Exception {
+		given(repository.findSummariesByPrimaryMuscle("nope")).willReturn(List.of());
+
+		mockMvc.perform(get("/exercise-definitions").param("primary_muscle", "nope"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$").isEmpty());
 	}
 
 	@Test

@@ -53,4 +53,36 @@ class ExerciseDefinitionRepositoryTests {
 		assertThat(names).isNotEmpty().doesNotHaveDuplicates().isSorted().contains("quadriceps");
 		assertThat(muscles.stream().mapToLong(MuscleCount::count).sum()).isEqualTo(repository.count());
 	}
+
+	@Test
+	void everyMuscleListHasAsManySummariesAsItsCount() {
+		for (MuscleCount muscle : repository.findMuscleCounts()) {
+			assertThat(repository.findSummariesByPrimaryMuscle(muscle.name()))
+					.as("exercises for %s", muscle.name())
+					.hasSize((int) muscle.count());
+		}
+	}
+
+	@Test
+	void unknownOrWrongCaseMuscleGivesAnEmptyList() {
+		assertThat(repository.findSummariesByPrimaryMuscle("nope")).isEmpty();
+		assertThat(repository.findSummariesByPrimaryMuscle("Quadriceps")).isEmpty();
+		assertThat(repository.findSummariesByPrimaryMuscle("")).isEmpty();
+	}
+
+	@Test
+	void musclesWithASpaceAreFound() {
+		assertThat(repository.findSummariesByPrimaryMuscle("middle back")).isNotEmpty();
+	}
+
+	@Test
+	void allSummariesCoverTheCatalogSortedByNameAndMapNullableColumns() {
+		List<ExerciseSummary> all = repository.findAllSummaries();
+
+		assertThat(all).hasSize((int) repository.count());
+		// Postgres' locale collation ignores case, spaces and punctuation, unlike Java's default ordering
+		assertThat(all.stream().map(e -> e.name().toLowerCase().replaceAll("[^a-z0-9]", "")).toList())
+				.isSorted();
+		assertThat(all).anyMatch(e -> e.slug().equals("Ankle_Circles") && e.equipment() == null);
+	}
 }
