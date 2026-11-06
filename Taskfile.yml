@@ -448,14 +448,6 @@ tasks:
       - docker image prune -f
       - docker volume prune -f
 
-  prod:db:remove-django-tables:
-    desc: Remove unused Django framework tables from the production database
-    dotenv: *PROD_DOTENV
-    prompt: "Drop unused Django framework tables from the production database?"
-    cmds:
-      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} cp fastapi/sql/remove_django_tables.sql db:/tmp/remove_django_tables.sql"
-      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec -T db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -v ON_ERROR_STOP=1 -f /tmp/remove_django_tables.sql'"
-
   prod:print-urls:
     desc: Print production URLs
     dotenv: *PROD_DOTENV
