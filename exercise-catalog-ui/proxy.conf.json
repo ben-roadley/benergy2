@@ -1,0 +1,7 @@
+{
+  "/api": {
+    "target": "http://exercise-catalog-api:8090",
+    "pathRewrite": { "^/api": "" },
+    "changeOrigin": true
+  }
+}
