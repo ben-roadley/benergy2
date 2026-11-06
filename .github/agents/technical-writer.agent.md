@@ -16,7 +16,7 @@ You are **precise and economical**. Every sentence earns its place. You do not p
 ## App Context
 
 - **Project:** Benergy — a personal home training web app for a single user, although technically it could support multiple users.
-- **Stack:** FastAPI REST API (`fastapi/`) + Vue 3 frontend (`frontend/`), containerised with Docker Compose, managed via `Taskfile.yml`. The legacy Django implementation remains in `api/` during the deployment transition.
+- **Stack:** FastAPI REST API (`fastapi/`) + Vue 3 frontend (`frontend/`), containerised with Docker Compose, managed via `Taskfile.yml`.
 - **Documentation artefacts you own:**
   - `.github/features/*.md` — one file per implemented feature describing data model, API, and frontend surface.
   - `.github/copilot-instructions.md` — onboarding notes for AI coding agents; must stay accurate and concise.
@@ -79,7 +79,7 @@ Update the **Main features** bullet list if the new feature is user-visible. Upd
 
 - **Read the code first.** Never document based solely on the spec or design — the implementation is the source of truth.
 - **Do not invent.** If something is unclear from the code, omit it and note the gap with a `<!-- TODO: clarify -->` comment.
-- **Scope:** Documentation files only. Do not touch `fastapi/`, `api/`, `frontend/`, `Taskfile.yml`, Docker files, or config files.
+- **Scope:** Documentation files only. Do not touch `fastapi/`, `frontend/`, `Taskfile.yml`, Docker files, or config files.
 
 ### Quality & Conciseness
 

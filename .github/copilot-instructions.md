@@ -2,7 +2,7 @@
 
 Summary
 -------
-This repository implements Benergy — a home training web app. Backend is a FastAPI REST API (located in `fastapi/`). Frontend is a Vue.js app built with Vite (located in `frontend/`). The app supports user auth, a user profile (personal/fitness data), per-user workout editing, workout session logging/history, a "live workout" feature, dedicated workout management and logs/insights hub pages, AI-generated warm-up suggestions (LLM via GitHub Models / Ollama), and a workout Insights section (volume-over-time charts). The legacy Django implementation remains in `api/` temporarily during the deployment transition. The stack is containerised and commonly run via Docker Compose.
+This repository implements Benergy — a home training web app. Backend is a FastAPI REST API (located in `fastapi/`). Frontend is a Vue.js app built with Vite (located in `frontend/`). The app supports user auth, a user profile (personal/fitness data), per-user workout editing, workout session logging/history, a "live workout" feature, dedicated workout management and logs/insights hub pages, AI-generated warm-up suggestions (LLM via GitHub Models / Ollama), and a workout Insights section (volume-over-time charts). The stack is containerised and commonly run via Docker Compose.
 
 Intended audience for this app, and context for these notes
 ----------
@@ -24,11 +24,9 @@ Project layout (short)
   - `fastapi/src/workouts/` — workout, logging, insights, and warm-up suggestion endpoints and services
   - `fastapi/src/catalog/` — exercise-definition search endpoint and service
   - `fastapi/src/main.py` — FastAPI application and router registration
-- `api/` — temporary legacy Django implementation retained during the migration period
 - `frontend/` — Vue app, `package.json`, Playwright e2e config under `e2e/`
 - `nginx/` — reverse proxy config and production Dockerfile
 - `Taskfile.yml` — primary developer-facing commands (start, tests, build, deploy)
-- `requirements/` — `base.txt`, `dev.txt`, `prod.txt`
 
 How to work safely (avoid common failures)
 ----------------------------------------
@@ -38,7 +36,6 @@ How to work safely (avoid common failures)
   - `task f:install` / `task f:dev` / `task f:test` (frontend)
 - Use `task f:shell` for frontend work. For FastAPI work, use `docker compose -f docker-compose.yml exec fastapi bash` or the FastAPI container shell.
 - The FastAPI service runs with `uvicorn src.main:app` on port 8888 and exposes interactive API documentation at `/docs`.
-- The legacy Django service remains in the development Compose file on port 8000 for rollback comparison; do not add new backend behavior there.
 - After changing `fastapi/requirements.txt`, rebuild the FastAPI image before running backend tasks: `docker compose -f docker-compose.yml build fastapi`.
 - Environment files: `.env.dev` for development, `.env.prod` for production. `Taskfile.yml` references these via `dotenv` sections.
 
@@ -84,8 +81,7 @@ Useful files & commands
 
 Search + code hygiene notes
 --------------------------
-- Repo contains a virtualenv under `api/.venv` — ignore it for edits and searches. Focus on source under `api/` and `frontend/`.
-- Search for `TODO`, `FIXME`, `HACK` as code pointers, but many matches appear in vendored/venv packages — scope searches to `api/`, `frontend/`, and root config files when triaging.
+- Search for `TODO`, `FIXME`, `HACK` as code pointers, but many matches appear in vendored/venv packages — scope searches to `fastapi/`, `frontend/`, and root config files when triaging.
 
 On PRs and changes
 -------------------
@@ -102,7 +98,6 @@ Where to look next
 ------------------
 - `Taskfile.yml` — canonical commands (dev, test, build, deploy)
 - `fastapi/` — FastAPI code, tests, requirements, and Dockerfile
-- `api/` — temporary legacy Django code retained during the migration period
 - `frontend/` — frontend app, `package.json`, e2e tests
 - `.github/` — CI and workflows (if present)
 

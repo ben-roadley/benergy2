@@ -8,7 +8,6 @@ vars:
   BACK: fastapi
   FRONT: frontend
   PROXY: nginx
-  BACK_PROD: web
   FRONT_PROD: frontend
   PROXY_PROD: nginx
   DEV_DOTENV: &DEV_DOTENV
@@ -48,7 +47,7 @@ tasks:
         echo "  task clean:        - Clean up unused containers/images/volumes"
         echo "  task default:      - Overview of project status"
         echo "  task down:         - Stop & remove containers (network stays)"
-        echo "  task logs:         - Tail logs for all or specific service: task logs -- web"
+        echo "  task logs:         - Tail logs for all or specific service: task logs -- fastapi"
         echo "  task ps:           - List running containers"
         echo "  task restart:      - Restart all services"
         echo "  task sh:           - Shell into any service (usage: task sh -- frontend)"
@@ -109,7 +108,7 @@ tasks:
       - "{{.COMPOSE}} {{.COMPOSE_FILES}} restart"
 
   logs:
-    desc: "Tail logs for all or specific service: task logs -- web"
+    desc: "Tail logs for all or specific service: task logs -- fastapi"
     dotenv: *DEV_DOTENV
     cmds:
       - "{{.COMPOSE}} {{.COMPOSE_FILES}} logs -f {{.CLI_ARGS}}"
@@ -234,6 +233,14 @@ tasks:
     cmds:
       - '{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.CLI_ARGS}} sh'
 
+  db:remove-django-tables:
+    desc: Remove unused Django framework tables from the development database
+    dotenv: *DEV_DOTENV
+    prompt: "Drop unused Django framework tables from the development database?"
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} cp fastapi/sql/remove_django_tables.sql db:/tmp/remove_django_tables.sql"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec -T db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -v ON_ERROR_STOP=1 -f /tmp/remove_django_tables.sql'"
+
   clean:
     desc: Remove unused containers/images/volumes (safe cleanup)
     dotenv: *DEV_DOTENV
@@ -274,7 +281,7 @@ tasks:
     dotenv: *DEV_DOTENV
     cmds:
       - |
-        URL="http://localhost:$BACKEND_PORT"
+        URL="http://localhost:8888/docs"
         echo "Opening Chrome at $URL"
         cmd.exe /C start chrome "$URL"
     silent: true
@@ -289,14 +296,11 @@ tasks:
     dotenv: *BUILD_DOTENV
     vars:
       PLATFORM: linux/amd64
-      WEB_DOCKER_IMAGE_TAG: web_amd64
       FASTAPI_DOCKER_IMAGE_TAG: fastapi_amd64
       NGINX_DOCKER_IMAGE_TAG: nginx_amd64
       FRONTEND_DOCKER_IMAGE_TAG: frontend_amd64
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}  -f api/Dockerfile.prod api
-      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}} -f fastapi/Dockerfile.prod fastapi
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
@@ -306,19 +310,6 @@ tasks:
       - |
         echo "✅ build:prod-amd64 complete!"
         
-  build:web-amd64:
-    desc: Build API production image for AMD64 and push to registry
-    dotenv: *BUILD_DOTENV
-    vars:
-      PLATFORM: linux/amd64
-      WEB_DOCKER_IMAGE_TAG: web_amd64
-    cmds:
-      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}  -f api/Dockerfile.prod api
-      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
-      - |
-        echo "✅ build:web-amd64 complete!"
-
   build:fastapi-amd64:
     desc: Build FastAPI production image for AMD64 and push to registry
     dotenv: *BUILD_DOTENV
@@ -363,14 +354,11 @@ tasks:
     dotenv: *BUILD_DOTENV
     vars:
       PLATFORM: linux/arm64/v8
-      WEB_DOCKER_IMAGE_TAG: web_arm64
       FASTAPI_DOCKER_IMAGE_TAG: fastapi_arm64
       NGINX_DOCKER_IMAGE_TAG: nginx_arm64
       FRONTEND_DOCKER_IMAGE_TAG: frontend_arm64
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}} -f api/Dockerfile.prod api
-      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}} -f fastapi/Dockerfile.prod fastapi
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
@@ -388,26 +376,12 @@ tasks:
       GITHUB_REPOSITORY: '{{.GITHUB_REPOSITORY | default "ben-roadley/benergy2"}}'
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:web-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:web-latest -f api/Dockerfile.prod --push api
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:fastapi-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:fastapi-latest -f fastapi/Dockerfile.prod --push fastapi
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:nginx-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:nginx-latest -f nginx/Dockerfile --push nginx
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache --build-arg VITE_API_BASE=/api -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-latest -f frontend/Dockerfile.prod --push frontend
 
       - |
         echo "✅ build:all-multi complete! (version: {{.VERSION}})"
-
-  build:web-arm64:
-    desc: Build API production image for ARM64 and push to registry
-    dotenv: *BUILD_DOTENV
-    vars:
-      PLATFORM: linux/arm64/v8
-      WEB_DOCKER_IMAGE_TAG: web_arm64
-    cmds:
-      - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}} -f api/Dockerfile.prod api
-      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.WEB_DOCKER_IMAGE_TAG}}
-      - |
-        echo "✅ build:web-arm64 complete!"
 
   build:fastapi-arm64:
     desc: Build FastAPI production image for ARM64 and push to registry
@@ -472,7 +446,7 @@ tasks:
       - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} restart"
 
   prod:logs:
-    desc: "Tail production logs for all or specific service: task prod:logs -- web"
+    desc: "Tail production logs for all or specific service: task prod:logs -- fastapi"
     dotenv: *PROD_DOTENV
     cmds:
       - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} logs -f {{.CLI_ARGS}}"
@@ -485,11 +459,11 @@ tasks:
 
   # Backend prod tasks (mirror dev but use prod vars)
   prod:b:shell:
-    desc: Interactive shell in production web container
+    desc: Interactive shell in production FastAPI container
     dotenv: *PROD_DOTENV
     interactive: true
     cmds:
-      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec {{.BACK_PROD}} bash"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec {{.BACK}} bash"
 
   # Nginx prod tasks
   prod:proxy:reload:
@@ -514,6 +488,14 @@ tasks:
       - docker image prune -f
       - docker volume prune -f
 
+  prod:db:remove-django-tables:
+    desc: Remove unused Django framework tables from the production database
+    dotenv: *PROD_DOTENV
+    prompt: "Drop unused Django framework tables from the production database?"
+    cmds:
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} cp fastapi/sql/remove_django_tables.sql db:/tmp/remove_django_tables.sql"
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} exec -T db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -v ON_ERROR_STOP=1 -f /tmp/remove_django_tables.sql'"
+
   prod:print-urls:
     desc: Print production URLs
     dotenv: *PROD_DOTENV
@@ -531,4 +513,4 @@ tasks:
     cmds:
       - echo "Pull latest images, run migrations, etc."
       - docker login {{.CI_REGISTRY}} -u {{.CI_REGISTRY_USER}} -p {{.CI_REGISTRY_PASSWORD}}
-      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} up -d --pull always "
+      - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} up -d --pull always"

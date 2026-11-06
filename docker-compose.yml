@@ -1,17 +1,6 @@
 version: '3.8'
 
 services:
-  web:
-    build: ./api
-    command: python manage.py runserver 0.0.0.0:${BACKEND_PORT:-8000}
-    volumes:
-      - ./api/:/usr/src/api/
-    ports:
-      - 8000:8000
-    env_file:
-      - ./.env.dev
-    depends_on:
-      - db
   fastapi:
     build: ./fastapi
     working_dir: /usr/src/fastapi
@@ -81,7 +70,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - VITE_API_BASE=${VITE_API_BASE}
     depends_on:
-      - web
+      - fastapi
 
 volumes:
   postgres_data:
