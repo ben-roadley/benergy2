@@ -21,9 +21,9 @@ Tech stack:
 
 => This is a small, container-first monorepo: a FastAPI backend (`fastapi/`) and a Vite frontend (`frontend/`). Built for local development with `Taskfile.yml` wrappers and Docker Compose. 🧰🚀
 
-**Backend refactor**
+**Backend**
 
-The backend has been rewritten from Django REST Framework to FastAPI. FastAPI provides automatic OpenAPI documentation, Pydantic request and response validation, and a smaller modular service structure while preserving the existing PostgreSQL data model and frontend API surface. The legacy Django implementation remains in `api/` temporarily as a rollback reference; production Compose wiring will be switched to FastAPI before deployment.
+The application uses FastAPI, which provides automatic OpenAPI documentation, Pydantic request and response validation, and a modular service structure while preserving the PostgreSQL data model and frontend API surface.
 
 **Why this repo**
 - Personal home training app (API + frontend) used for development and Raspberry Pi deploys.
@@ -46,8 +46,6 @@ task up
 
 The FastAPI service is available at `http://localhost:8888`. Interactive OpenAPI documentation is available at `http://localhost:8888/docs`.
 
-The legacy Django service is still started on port 8000 during the transition, but it is no longer the target backend.
-
 Notes:
 - Use `.env.dev` for development and `.env.prod` for production.
 - The FastAPI container is named `fastapi` and runs `uvicorn src.main:app`.
@@ -69,7 +67,7 @@ task b:coverage
 task b:lint
 ```
 
-These commands run inside the `fastapi` container. Django-only management commands are no longer exposed through the Taskfile.
+These commands run inside the `fastapi` container.
 
 **Docker / Production**
 - Use `docker-compose.yml` for development and `docker-compose.prod.yml` for production. Prefer the `task` build/deploy tasks when available (`Taskfile.yml`).
@@ -79,9 +77,10 @@ task build            # run build tasks (see Taskfile.yml)
 task prod:deploy      # deploy latest images in production
 ```
 
+Existing PostgreSQL databases may still contain Django framework tables. Start the corresponding Compose stack and back up its database, then run `task db:remove-django-tables` for development or `task prod:db:remove-django-tables` for production. Both tasks prompt before running [`fastapi/sql/remove_django_tables.sql`](./fastapi/sql/remove_django_tables.sql), which drops only Django framework tables and does not use `CASCADE`. Keep the shared application tables (`auth_user`, `users_userprofile`, `workout_*`, and `catalog_exercisedefinition`), which FastAPI still uses.
+
 **Project layout (high level)**
-- `fastapi/` — FastAPI backend, SQLModel models, routers, services, schemas, tests, and Dockerfile
-- `api/` — temporary legacy Django backend retained during the migration period
+- `fastapi/` — FastAPI backend, SQLModel models, routers, services, tests, and Dockerfiles
 - `frontend/` — Vite + Vue app, `package.json`, e2e tests
 - `nginx/` — reverse-proxy
 - `Taskfile.yml` — canonical developer commands (use `task`)
@@ -121,10 +120,10 @@ task build:all-amd64
 ```
 
 Images and tags
-- Built images are pushed to GHCR under `ghcr.io/<owner>/<repo>:<tag>`. The `Taskfile.yml` current targets tag images with names like `web_amd64`, `frontend_amd64`, `nginx_amd64`, and `web_arm64`, etc. Example image names:
+- Built images are pushed to GHCR under `ghcr.io/<owner>/<repo>:<tag>`. The `Taskfile.yml` current targets tag images with names like `fastapi_amd64`, `frontend_amd64`, `nginx_amd64`, and their ARM64 equivalents. Example image names:
 
 ```
-ghcr.io/ben-roadley/benergy:web_amd64
+ghcr.io/ben-roadley/benergy:fastapi_amd64
 ghcr.io/ben-roadley/benergy:frontend_arm64
 ```
 
@@ -132,7 +131,7 @@ Raspberry Pi deployment tips
 - On your Raspberry Pi pull the appropriate `arm64` images (or `arm/v7` if you build that variant). Example:
 
 ```bash
-docker pull ghcr.io/ben-roadley/benergy:web_arm64
+docker pull ghcr.io/ben-roadley/benergy:fastapi_arm64
 docker pull ghcr.io/ben-roadley/benergy:frontend_arm64
 docker compose -f docker-compose.prod.yml up -d
 ```

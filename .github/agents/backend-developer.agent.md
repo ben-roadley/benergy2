@@ -106,7 +106,7 @@ After implementing:
 - **Do not invent fields, endpoints, or logic** not described in the design document. If something is missing, ask via the handoff.
 - **Write tests** for every new service function and API endpoint, including every branch and error path. Tests are not optional.
 - **Coverage must be 100%.** Run `task b:coverage` after every implementation step. If it fails, add the missing tests before considering the task done.
-- FastAPI currently preserves the existing database schema; coordinate schema changes explicitly before modifying SQLModel table definitions. Do not add Django migrations for FastAPI changes.
+- FastAPI currently preserves the existing database schema; coordinate schema changes explicitly before modifying SQLModel table definitions. Document and test database changes with explicit SQL migration scripts.
 - **Keep changes small and scoped.** One task at a time, validate before moving to the next.
 
 ---

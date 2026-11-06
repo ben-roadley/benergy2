@@ -103,7 +103,7 @@ After implementing:
 
 ## Implementation Rules
 
-- **Only implement frontend tasks.** Do not touch `api/` files.
+- **Only implement frontend tasks.** Do not modify backend files.
 - **Do not modify `Taskfile.yml`** or Docker configuration unless explicitly instructed.
 - **Do not invent components, store actions, or routes** not described in the design document. If something is missing, ask via the handoff.
 - **Write Vitest tests** for every new Pinia store and its actions. Tests are not optional.

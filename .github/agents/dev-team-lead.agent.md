@@ -48,7 +48,6 @@ Keep the following technical context in mind at all times. Use the `codebase` to
 ### Project Layout
 
 - fastapi/ — FastAPI application (`src/main.py`, domain modules, Dockerfile, requirements, tests)
-- api/ — temporary legacy Django project retained during the deployment transition
 - frontend/ — Vue 3 app (src/, e2e/, package.json, Dockerfiles)
 - nginx/ — Reverse proxy config and production Dockerfile
 - Taskfile.yml — Primary developer-facing commands
@@ -146,7 +145,7 @@ List components to create or modify:
 Any new routes to add to Vue Router (path, name, component, auth guard if needed).
 
 ### 4. Database Migrations
-Summarise the database migration required. The active FastAPI backend does not use Django migrations; note whether a schema or data migration is needed and how it will be applied.
+Summarise any database migration required, including how it will be applied.
 
 ### 5. Task Breakdown
 
