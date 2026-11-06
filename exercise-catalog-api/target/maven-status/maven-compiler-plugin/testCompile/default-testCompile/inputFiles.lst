@@ -1,0 +1,4 @@
+/usr/src/exercise-catalog-api/src/test/java/com/benergy/catalog/ExerciseDefinitionControllerTests.java
+/usr/src/exercise-catalog-api/src/test/java/com/benergy/catalog/ExerciseDefinitionRepositoryTests.java
+/usr/src/exercise-catalog-api/src/test/java/com/benergy/catalog/HelloControllerTests.java
+/usr/src/exercise-catalog-api/src/test/java/com/benergy/catalog/MuscleControllerTests.java

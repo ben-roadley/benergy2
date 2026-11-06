@@ -3,16 +3,10 @@ import { describe, it, expect } from 'vitest'
 import api from '../api'
 
 describe('api (axios instance)', () => {
-  it('allows cookies for API requests', () => {
-    expect(api.defaults.withCredentials).toBe(true)
-  })
-
-  it('keeps the configured CSRF cookie name', () => {
-    expect(api.defaults.xsrfCookieName).toBe('csrftoken')
-  })
-
-  it('keeps the configured CSRF header name', () => {
-    expect(api.defaults.xsrfHeaderName).toBe('X-CSRFToken')
+  it('does not use cookie-based authentication or CSRF defaults', () => {
+    expect(api.defaults.withCredentials).not.toBe(true)
+    expect(api.defaults.xsrfCookieName).not.toBe('csrftoken')
+    expect(api.defaults.xsrfHeaderName).not.toBe('X-CSRFToken')
   })
 
   it('has a request interceptor for bearer authentication', () => {

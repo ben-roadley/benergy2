@@ -3,7 +3,6 @@ import { TOKEN_STORAGE_KEY } from '@/stores/auth'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || '',
-  withCredentials: true,
 })
 
 api.interceptors.request.use(async (config) => {
@@ -14,9 +13,5 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
-
-// CSRF defaults for Django session auth
-api.defaults.xsrfCookieName = 'csrftoken'
-api.defaults.xsrfHeaderName = 'X-CSRFToken'
 
 export default api
