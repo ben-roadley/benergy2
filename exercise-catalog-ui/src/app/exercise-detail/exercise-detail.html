@@ -1,0 +1,88 @@
+@if (exercise.error()) {
+  @if (notFound()) {
+    <p-message severity="warn">
+      Exercise not found. <a routerLink="/">Back to Explore</a>
+    </p-message>
+  } @else {
+    <p-message severity="error">Could not load exercise.</p-message>
+  }
+} @else if (exercise.isLoading()) {
+  <p-skeleton height="2rem" width="20rem" styleClass="skeleton-gap" />
+  <div class="layout">
+    <p-skeleton height="16rem" />
+    <p-skeleton height="16rem" />
+  </div>
+} @else if (exercise.value(); as e) {
+  <p-breadcrumb [home]="home" [model]="crumbs()" />
+
+  <h1>{{ e.name }}</h1>
+
+  <div class="layout">
+    <div class="images">
+      @for (image of e.images; track image) {
+        @if (failedImages().has(image)) {
+          <div class="thumb placeholder"><i class="pi pi-image"></i></div>
+        } @else {
+          <p-image
+            [src]="imageUrl(image)"
+            [alt]="e.name"
+            [preview]="true"
+            imageClass="thumb"
+            (onImageError)="markFailed(image)"
+          />
+        }
+      } @empty {
+        <div class="thumb placeholder"><i class="pi pi-image"></i></div>
+      }
+    </div>
+
+    <p-card header="Details">
+      <dl>
+        <dt>Category</dt>
+        <dd><p-tag [value]="e.category" severity="info" /></dd>
+        <dt>Level</dt>
+        <dd><p-tag [value]="e.level" severity="secondary" /></dd>
+        <dt>Force</dt>
+        <dd>
+          @if (e.force) { <p-tag [value]="e.force" severity="secondary" /> } @else { <span class="muted">Not specified</span> }
+        </dd>
+        <dt>Mechanic</dt>
+        <dd>
+          @if (e.mechanic) { <p-tag [value]="e.mechanic" severity="secondary" /> } @else { <span class="muted">Not specified</span> }
+        </dd>
+        <dt>Equipment</dt>
+        <dd>
+          @if (e.equipment) { <p-tag [value]="e.equipment" severity="secondary" /> } @else { <span class="muted">Not specified</span> }
+        </dd>
+        <dt>Primary muscles</dt>
+        <dd>
+          @for (m of e.primary_muscles; track m) {
+            <a [routerLink]="['/muscles', m]"><p-tag [value]="m" severity="success" /></a>
+          } @empty {
+            <span class="muted">None</span>
+          }
+        </dd>
+        <dt>Secondary muscles</dt>
+        <dd>
+          @for (m of e.secondary_muscles; track m) {
+            <a [routerLink]="['/muscles', m]"><p-tag [value]="m" severity="contrast" /></a>
+          } @empty {
+            <span class="muted">None</span>
+          }
+        </dd>
+      </dl>
+    </p-card>
+  </div>
+
+  <p-card header="Instructions" class="instructions">
+    @if (e.instructions.length) {
+      <ol>
+        @for (step of e.instructions; track $index) {
+          <li>{{ step }}</li>
+        }
+      </ol>
+    } @else {
+      <span class="muted">No instructions.</span>
+    }
+  </p-card>
+}
