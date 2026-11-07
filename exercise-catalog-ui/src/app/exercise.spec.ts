@@ -15,7 +15,9 @@ describe('ExerciseService', () => {
       .getByMuscle('middle back')
       .subscribe((r) => (result = r));
     const req = http.expectOne(
-      (r) => r.url === '/api/exercise-definitions' && r.params.get('primary_muscle') === 'middle back',
+      (r) =>
+        r.url === '/catalog-api/exercise-definitions' &&
+        r.params.get('primary_muscle') === 'middle back',
     );
     req.flush([]);
 
@@ -32,7 +34,7 @@ describe('ExerciseService', () => {
 
     TestBed.inject(ExerciseService).getBySlug('3_4_Sit-Up').subscribe();
 
-    http.expectOne('/api/exercise-definitions/3_4_Sit-Up').flush({});
+    http.expectOne('/catalog-api/exercise-definitions/3_4_Sit-Up').flush({});
     http.verify();
   });
 });

@@ -31,12 +31,14 @@ export class ExerciseService {
 
   /** One full exercise, or a 404 error when the slug is unknown. */
   getBySlug(slug: string): Observable<ExerciseDetail> {
-    return this.http.get<ExerciseDetail>(`/api/exercise-definitions/${encodeURIComponent(slug)}`);
+    return this.http.get<ExerciseDetail>(
+      `/catalog-api/exercise-definitions/${encodeURIComponent(slug)}`,
+    );
   }
 
   /** Exercises of one primary muscle, sorted by name (proxied to the catalog API). */
   getByMuscle(muscle: string): Observable<ExerciseSummary[]> {
-    return this.http.get<ExerciseSummary[]>('/api/exercise-definitions', {
+    return this.http.get<ExerciseSummary[]>('/catalog-api/exercise-definitions', {
       params: { primary_muscle: muscle },
     });
   }

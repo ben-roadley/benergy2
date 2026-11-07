@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { MuscleService } from './muscle';
 
 describe('MuscleService', () => {
-  it('should GET /api/muscles', () => {
+  it('should GET /catalog-api/muscles', () => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -12,7 +12,7 @@ describe('MuscleService', () => {
     let result: unknown;
 
     TestBed.inject(MuscleService).getMuscles().subscribe((r) => (result = r));
-    http.expectOne('/api/muscles').flush([{ name: 'biceps', count: 53 }]);
+    http.expectOne('/catalog-api/muscles').flush([{ name: 'biceps', count: 53 }]);
 
     expect(result).toEqual([{ name: 'biceps', count: 53 }]);
     http.verify();
