@@ -82,8 +82,6 @@ git push origin v1.2.3
 
 On the production host, authenticate with `docker login ghcr.io` first if the package is private, then run `task prod:deploy` to pull the new `latest` images and restart the stack.
 
-Existing PostgreSQL databases may still contain Django framework tables. Start the corresponding Compose stack and back up its database, then run `task db:remove-django-tables` for development or `task prod:db:remove-django-tables` for production. Both tasks prompt before running [`fastapi/sql/remove_django_tables.sql`](./fastapi/sql/remove_django_tables.sql), which drops only Django framework tables and does not use `CASCADE`. Keep the shared application tables (`auth_user`, `users_userprofile`, `workout_*`, and `catalog_exercisedefinition`), which FastAPI still uses.
-
 **Project layout (high level)**
 - `fastapi/` — FastAPI backend, SQLModel models, routers, services, tests, and Dockerfiles
 - `frontend/` — Vite + Vue app, `package.json`, e2e tests

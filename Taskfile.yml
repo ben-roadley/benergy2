@@ -233,14 +233,6 @@ tasks:
     cmds:
       - '{{.COMPOSE}} {{.COMPOSE_FILES}} exec {{.CLI_ARGS}} sh'
 
-  db:remove-django-tables:
-    desc: Remove unused Django framework tables from the development database
-    dotenv: *DEV_DOTENV
-    prompt: "Drop unused Django framework tables from the development database?"
-    cmds:
-      - "{{.COMPOSE}} {{.COMPOSE_FILES}} cp fastapi/sql/remove_django_tables.sql db:/tmp/remove_django_tables.sql"
-      - "{{.COMPOSE}} {{.COMPOSE_FILES}} exec -T db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -v ON_ERROR_STOP=1 -f /tmp/remove_django_tables.sql'"
-
   clean:
     desc: Remove unused containers/images/volumes (safe cleanup)
     dotenv: *DEV_DOTENV
