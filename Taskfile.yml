@@ -299,14 +299,20 @@ tasks:
       FASTAPI_DOCKER_IMAGE_TAG: fastapi_amd64
       NGINX_DOCKER_IMAGE_TAG: nginx_amd64
       FRONTEND_DOCKER_IMAGE_TAG: frontend_amd64
+      EXERCISE_CATALOG_API_DOCKER_IMAGE_TAG: exercise-catalog-api_amd64
+      EXERCISE_CATALOG_UI_DOCKER_IMAGE_TAG: exercise-catalog-ui_amd64
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}} -f fastapi/Dockerfile.prod fastapi
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.EXERCISE_CATALOG_API_DOCKER_IMAGE_TAG}} -f exercise-catalog-api/Dockerfile.prod exercise-catalog-api
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.EXERCISE_CATALOG_API_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache --build-arg VITE_API_BASE=/api -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.EXERCISE_CATALOG_UI_DOCKER_IMAGE_TAG}} -f exercise-catalog-ui/Dockerfile.prod exercise-catalog-ui
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.EXERCISE_CATALOG_UI_DOCKER_IMAGE_TAG}}
       - |
         echo "✅ build:prod-amd64 complete!"
         
@@ -357,14 +363,20 @@ tasks:
       FASTAPI_DOCKER_IMAGE_TAG: fastapi_arm64
       NGINX_DOCKER_IMAGE_TAG: nginx_arm64
       FRONTEND_DOCKER_IMAGE_TAG: frontend_arm64
+      EXERCISE_CATALOG_API_DOCKER_IMAGE_TAG: exercise-catalog-api_arm64
+      EXERCISE_CATALOG_UI_DOCKER_IMAGE_TAG: exercise-catalog-ui_arm64
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}} -f fastapi/Dockerfile.prod fastapi
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FASTAPI_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.EXERCISE_CATALOG_API_DOCKER_IMAGE_TAG}} -f exercise-catalog-api/Dockerfile.prod exercise-catalog-api
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.EXERCISE_CATALOG_API_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}} -f nginx/Dockerfile nginx
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.NGINX_DOCKER_IMAGE_TAG}}
       - docker build --platform {{.PLATFORM}} --pull --no-cache --build-arg VITE_API_BASE=/api -t ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}} -f frontend/Dockerfile.prod frontend
       - docker push ghcr.io/$GITHUB_REPOSITORY:{{.FRONTEND_DOCKER_IMAGE_TAG}}
+      - docker build --platform {{.PLATFORM}} --pull --no-cache -t ghcr.io/$GITHUB_REPOSITORY:{{.EXERCISE_CATALOG_UI_DOCKER_IMAGE_TAG}} -f exercise-catalog-ui/Dockerfile.prod exercise-catalog-ui
+      - docker push ghcr.io/$GITHUB_REPOSITORY:{{.EXERCISE_CATALOG_UI_DOCKER_IMAGE_TAG}}
       - |
         echo "✅ build:all-arm64 complete!"
 
@@ -377,8 +389,10 @@ tasks:
     cmds:
       - docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:fastapi-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:fastapi-latest -f fastapi/Dockerfile.prod --push fastapi
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:exercise-catalog-api-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:exercise-catalog-api-latest -f exercise-catalog-api/Dockerfile.prod --push exercise-catalog-api
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:nginx-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:nginx-latest -f nginx/Dockerfile --push nginx
       - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache --build-arg VITE_API_BASE=/api -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:frontend-latest -f frontend/Dockerfile.prod --push frontend
+      - docker buildx build --platform linux/amd64,linux/arm64 --pull --no-cache -t ghcr.io/{{.GITHUB_REPOSITORY}}:exercise-catalog-ui-{{.VERSION}} -t ghcr.io/{{.GITHUB_REPOSITORY}}:exercise-catalog-ui-latest -f exercise-catalog-ui/Dockerfile.prod --push exercise-catalog-ui
 
       - |
         echo "✅ build:all-multi complete! (version: {{.VERSION}})"
@@ -496,13 +510,14 @@ tasks:
         echo "??? Access production frontend at: https://your-prod-domain.com"  # Adjust based on your prod setup
       - |
         echo "??? Access production API at: https://your-prod-api.com"
+      - |
+        echo "Exercise catalog: https://your-prod-domain.com/exercise-catalog/"
     silent: true
 
   # Add prod-specific tasks as needed, e.g., for deployment
   prod:deploy:
-    desc: Deploy to production (customize based on your CI/CD)
+    desc: Pull and deploy the latest release images from GHCR
     dotenv: *PROD_DOTENV
     cmds:
-      - echo "Pull latest images, run migrations, etc."
-      - docker login {{.CI_REGISTRY}} -u {{.CI_REGISTRY_USER}} -p {{.CI_REGISTRY_PASSWORD}}
+      - echo "Deploying release images from GHCR. Authenticate with 'docker login ghcr.io' first if the package is private."
       - "{{.COMPOSE}} {{.COMPOSE_FILES_PROD}} up -d --pull always"

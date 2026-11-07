@@ -1,12 +1,23 @@
 services:
   fastapi:
-    image: ${CI_REGISTRY_IMAGE}:${FASTAPI_DOCKER_IMAGE_TAG}
+    image: ${IMAGE_REGISTRY:-ghcr.io/ben-roadley/benergy2}:${FASTAPI_DOCKER_IMAGE_TAG}
     restart: always
     command: uvicorn src.main:app --host 0.0.0.0 --port ${FASTAPI_PORT:-8888}
     expose:
       - ${FASTAPI_PORT:-8888}
     env_file:
       - .env.prod
+    depends_on:
+      - db
+  exercise-catalog-api:
+    image: ${IMAGE_REGISTRY:-ghcr.io/ben-roadley/benergy2}:${EXERCISE_CATALOG_API_DOCKER_IMAGE_TAG:-exercise-catalog-api-latest}
+    restart: always
+    expose:
+      - 8090
+    env_file:
+      - .env.prod
+    environment:
+      CATALOG_API_PORT: 8090
     depends_on:
       - db
   db:
@@ -17,14 +28,19 @@ services:
     env_file:
       - ./.env.prod.db
   frontend:
-    image: ${CI_REGISTRY_IMAGE}:${FRONTEND_DOCKER_IMAGE_TAG}
+    image: ${IMAGE_REGISTRY:-ghcr.io/ben-roadley/benergy2}:${FRONTEND_DOCKER_IMAGE_TAG}
     restart: always
     expose:
       - ${FRONTEND_PORT:-3000}
     env_file:
       - .env.prod
+  exercise-catalog-ui:
+    image: ${IMAGE_REGISTRY:-ghcr.io/ben-roadley/benergy2}:${EXERCISE_CATALOG_UI_DOCKER_IMAGE_TAG:-exercise-catalog-ui-latest}
+    restart: always
+    expose:
+      - 80
   nginx:
-    image: ${CI_REGISTRY_IMAGE}:${NGINX_DOCKER_IMAGE_TAG}
+    image: ${IMAGE_REGISTRY:-ghcr.io/ben-roadley/benergy2}:${NGINX_DOCKER_IMAGE_TAG}
     restart: always
     volumes:
       - ./nginx/certs:/etc/nginx/certs:ro
@@ -34,5 +50,7 @@ services:
     depends_on:
       - fastapi
       - frontend
+      - exercise-catalog-api
+      - exercise-catalog-ui
 volumes:
   postgres_data:

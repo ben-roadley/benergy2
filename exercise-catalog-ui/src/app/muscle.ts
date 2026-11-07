@@ -13,6 +13,6 @@ export class MuscleService {
 
   /** Primary muscles with their exercise count, sorted by name (proxied to the catalog API). */
   getMuscles(): Observable<MuscleCount[]> {
-    return this.http.get<MuscleCount[]>('/api/muscles');
+    return this.http.get<MuscleCount[]>('/catalog-api/muscles');
   }
 }

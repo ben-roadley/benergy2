@@ -1,0 +1,16 @@
+FROM node:24-alpine AS build
+
+WORKDIR /usr/src/exercise-catalog-ui
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build -- --base-href /exercise-catalog/
+
+FROM nginx:alpine
+
+COPY --from=build /usr/src/exercise-catalog-ui/dist/exercise-catalog-ui/browser /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80

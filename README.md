@@ -71,11 +71,16 @@ These commands run inside the `fastapi` container.
 
 **Docker / Production**
 - Use `docker-compose.yml` for development and `docker-compose.prod.yml` for production. Prefer the `task` build/deploy tasks when available (`Taskfile.yml`).
+- The Angular exercise catalog is served at `https://<your-prod-domain>/exercise-catalog/`; its Spring Boot API is routed separately at `/catalog-api/`, while the existing FastAPI `/api/` routes remain unchanged.
+- Production Compose defaults to `ghcr.io/ben-roadley/benergy2`; set `IMAGE_REGISTRY` in `.env.prod` to use another registry. It deploys `latest` release tags by default; set the `*_DOCKER_IMAGE_TAG` variables in `.env.prod` to pin a specific release.
+- To build and publish all production images, push a semantic-version tag. The release workflow builds multi-architecture images in GHCR, including the exercise catalog:
 
 ```bash
-task build            # run build tasks (see Taskfile.yml)
-task prod:deploy      # deploy latest images in production
+git tag v1.2.3
+git push origin v1.2.3
 ```
+
+On the production host, authenticate with `docker login ghcr.io` first if the package is private, then run `task prod:deploy` to pull the new `latest` images and restart the stack.
 
 Existing PostgreSQL databases may still contain Django framework tables. Start the corresponding Compose stack and back up its database, then run `task db:remove-django-tables` for development or `task prod:db:remove-django-tables` for production. Both tasks prompt before running [`fastapi/sql/remove_django_tables.sql`](./fastapi/sql/remove_django_tables.sql), which drops only Django framework tables and does not use `CASCADE`. Keep the shared application tables (`auth_user`, `users_userprofile`, `workout_*`, and `catalog_exercisedefinition`), which FastAPI still uses.
 
@@ -123,8 +128,10 @@ Images and tags
 - Built images are pushed to GHCR under `ghcr.io/<owner>/<repo>:<tag>`. The `Taskfile.yml` current targets tag images with names like `fastapi_amd64`, `frontend_amd64`, `nginx_amd64`, and their ARM64 equivalents. Example image names:
 
 ```
-ghcr.io/ben-roadley/benergy:fastapi_amd64
-ghcr.io/ben-roadley/benergy:frontend_arm64
+ghcr.io/ben-roadley/benergy2:fastapi-latest
+ghcr.io/ben-roadley/benergy2:frontend-latest
+ghcr.io/ben-roadley/benergy2:exercise-catalog-api-latest
+ghcr.io/ben-roadley/benergy2:exercise-catalog-ui-latest
 ```
 
 Raspberry Pi deployment tips
